@@ -37,7 +37,8 @@ class SearchModal extends Modal {
         // Link type selector
         const dropdownContainer = contentEl.createDiv({ cls: 'dropdown' });
         dropdownContainer.createEl("label", { text: "Link Type:" });
-        const linkTypeDropdown = new DropdownComponent(dropdownContainer)
+        const dropdownComponentContainer = dropdownContainer.createDiv({ cls: 'dropdown-component' });
+        const linkTypeDropdown = new DropdownComponent(dropdownComponentContainer)
             .addOption(LinkType.NOTE, "Note Link ([[filename]])")
             .addOption(LinkType.BLOCK, "Block Link ([[filename#^blockid]])")
             .addOption(LinkType.HEADING, "Heading Link ([[filename#Heading]])")
@@ -45,9 +46,9 @@ class SearchModal extends Modal {
                 this.linkType = value as LinkType;
                 // Show/hide reference inputs based on link type
                 if (this.blockIdInput && this.headingInput) {
-                    this.blockIdInput.inputEl.parentElement.style.display = 
+                    this.blockIdInput.inputEl.parentElement.parentElement.style.display = 
                         value === LinkType.BLOCK ? 'block' : 'none';
-                    this.headingInput.inputEl.parentElement.style.display = 
+                    this.headingInput.inputEl.parentElement.parentElement.style.display = 
                         value === LinkType.HEADING ? 'block' : 'none';
                 }
             });
@@ -55,21 +56,24 @@ class SearchModal extends Modal {
         // Old file name input
         const oldFileContainer = contentEl.createDiv({ cls: 'setting-item' });
         oldFileContainer.createEl("label", { text: "Old File Name:" });
-        const oldFileInput = new TextComponent(oldFileContainer)
+        const oldFileInputContainer = oldFileContainer.createDiv();
+        const oldFileInput = new TextComponent(oldFileInputContainer)
             .setPlaceholder("Enter old file name (e.g., fooA)")
             .onChange(value => this.oldFileName = value);
         
         // New file name input
         const newFileContainer = contentEl.createDiv({ cls: 'setting-item' });
         newFileContainer.createEl("label", { text: "New File Name:" });
-        const newFileInput = new TextComponent(newFileContainer)
+        const newFileInputContainer = newFileContainer.createDiv();
+        const newFileInput = new TextComponent(newFileInputContainer)
             .setPlaceholder("Enter new file name (e.g., fooB)")
             .onChange(value => this.newFileName = value);
 
         // Block ID input (only shown for block links)
         const blockContainer = contentEl.createDiv({ cls: 'setting-item' });
         blockContainer.createEl("label", { text: "Block ID:" });
-        this.blockIdInput = new TextComponent(blockContainer)
+        const blockInputContainer = blockContainer.createDiv();
+        this.blockIdInput = new TextComponent(blockInputContainer)
             .setPlaceholder("Enter block ID (e.g., bar1234)")
             .onChange(value => this.blockId = value);
         blockContainer.style.display = 'none';
@@ -77,7 +81,8 @@ class SearchModal extends Modal {
         // Heading input (only shown for heading links)
         const headingContainer = contentEl.createDiv({ cls: 'setting-item' });
         headingContainer.createEl("label", { text: "Heading:" });
-        this.headingInput = new TextComponent(headingContainer)
+        const headingInputContainer = headingContainer.createDiv();
+        this.headingInput = new TextComponent(headingInputContainer)
             .setPlaceholder("Enter heading text (e.g., Introduction)")
             .onChange(value => this.headingText = value);
         headingContainer.style.display = 'none';
