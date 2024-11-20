@@ -14,12 +14,14 @@
 .link-maintainer-modal .setting-item {
     margin-bottom: 15px;
     display: flex;
-    align-items: center; /* Align label and input fields horizontally */
-    gap: 15px; /* Add space between label and inputs */
+    flex-direction: column; /* Align label and input vertically */
+    align-items: flex-start; /* Align content to the left */
 }
 
-.link-maintainer-modal input,
-.link-maintainer-modal select {
+.link-maintainer-modal select,
+.link-maintainer-modal input {
+    width: 100%; /* Ensure inputs take up the full width */
+    max-width: 400px; /* Optional: Set a max width for better layout */
     height: 36px;
     padding: 8px;
     border-radius: 4px;
@@ -29,30 +31,14 @@
     box-sizing: border-box;
 }
 
-.link-maintainer-modal .link-type-container {
-    display: flex;
-    align-items: center; /* Align text input and dropdown horizontally */
-    gap: 10px; /* Space between input box and dropdown */
-    width: 100%; /* Ensure it spans the modal width */
+.link-maintainer-modal select {
+    appearance: none; /* Remove browser-specific styling */
 }
 
-.link-maintainer-modal .link-type-container input {
-    flex: 2; /* Input box takes more space */
-}
-
-.link-maintainer-modal .link-type-container select {
-    flex: 1; /* Dropdown is narrower than the input */
-    appearance: none; /* Remove browser-specific dropdown styling */
-}
-
-.link-maintainer-modal select:focus {
+.link-maintainer-modal select:focus,
+.link-maintainer-modal input:focus {
     outline: 2px solid var(--interactive-accent);
-}
-
-.link-maintainer-modal input:focus,
-.link-maintainer-modal select:focus {
     border-color: var(--interactive-accent);
-    outline: none;
 }
 
 .link-maintainer-modal button {
@@ -62,6 +48,7 @@
     color: var(--text-on-accent);
     border: none;
     cursor: pointer;
+    margin-top: 10px;
 }
 
 .link-maintainer-modal button:hover {
