@@ -1,0 +1,9 @@
+{ 
+  "id": "block-link-updater", 
+  "name": "Block Link Updater", 
+  "version": "0.1.0", 
+  "description": "A plugin to update block links when notes are split.", 
+  "author": "Your Name", 
+  "minAppVersion": "0.9.7", 
+  "isDesktopOnly": true 
+}
