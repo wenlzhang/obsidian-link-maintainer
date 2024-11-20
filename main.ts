@@ -1,4 +1,4 @@
-import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent } from 'obsidian';
+import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile } from 'obsidian';
 
 interface LinkMatch {
     file: string;
@@ -19,6 +19,8 @@ class SearchModal extends Modal {
     blockId: string;
     headingText: string;
     linkType: LinkType;
+    blockIdInput: TextComponent;
+    headingInput: TextComponent;
     onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void;
 
     constructor(app: App, onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void) {
@@ -123,7 +125,7 @@ class ResultsModal extends Modal {
     newFileName: string;
     reference: string | null;
     linkType: LinkType;
-    onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | null) => void;
+    onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) => void;
 
     constructor(
         app: App, 
@@ -131,7 +133,7 @@ class ResultsModal extends Modal {
         newFileName: string,
         reference: string | null,
         linkType: LinkType,
-        onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | null) => void
+        onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) => void
     ) {
         super(app);
         this.matches = matches;
@@ -177,7 +179,7 @@ class ResultsModal extends Modal {
         // Confirm button
         const confirmButton = contentEl.createEl("button", { text: "Confirm Replacement" });
         confirmButton.addEventListener("click", () => {
-            this.onConfirm(this.matches, this.newFileName, this.reference);
+            this.onConfirm(this.matches, this.newFileName, this.reference, this.linkType);
             this.close();
         });
     }
@@ -212,34 +214,34 @@ export default class LinkMaintainer extends Plugin {
 
         // Escape special regex characters in the file name but keep spaces
         const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedReference = reference ? reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+
+        let pattern: string;
+        switch (linkType) {
+            case LinkType.BLOCK:
+                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#\\^${escapedReference}(\\|[^\\]]+)?\\]\\]`;
+                break;
+            case LinkType.HEADING:
+                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#${escapedReference}(\\|[^\\]]+)?\\]\\]`;
+                break;
+            default:
+                pattern = `(!?\\[\\[)${escapedOldFileName}(\\|[^\\]]+)?\\]\\]`;
+        }
+
+        const regex = new RegExp(pattern, 'g');
 
         for (const file of files) {
             const content = await this.app.vault.read(file);
             const lines = content.split('\n');
-            
-            lines.forEach((line, index) => {
-                let pattern: string;
-                switch (linkType) {
-                    case LinkType.BLOCK:
-                        // Search for block links in the format [[oldFileName#^blockId]]
-                        pattern = `\\[\\[${escapedOldFileName}#\\^${reference}\\]\\]`;
-                        break;
-                    case LinkType.HEADING:
-                        // Search for heading links in the format [[oldFileName#Heading]]
-                        pattern = `\\[\\[${escapedOldFileName}#${reference}\\]\\]`;
-                        break;
-                    default:
-                        // Search for note links in the format [[oldFileName]]
-                        pattern = `\\[\\[${escapedOldFileName}\\]\\]`;
-                }
 
-                const match = line.match(new RegExp(pattern));
-                if (match) {
+            lines.forEach((line, index) => {
+                let match;
+                while ((match = regex.exec(line)) !== null) {
                     matches.push({
                         file: file.path,
                         lineContent: line,
                         lineNumber: index + 1,
-                        linkText: match[0]
+                        linkText: match[0],
                     });
                 }
             });
@@ -252,48 +254,59 @@ export default class LinkMaintainer extends Plugin {
             newFileName,
             reference,
             linkType,
-            (matches, newFileName, reference) => {
+            (matches, newFileName, reference, linkType) => {
                 this.replaceLinks(matches, newFileName, reference, linkType);
             }
         ).open();
     }
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+        // Extract the old file name from the first match
+        const oldFileNameMatch = matches[0].linkText.match(/^\[\[!?([^\#\|\]]+)/);
+        if (!oldFileNameMatch) {
+            new Notice("Failed to extract old file name from link.");
+            return;
+        }
+        const escapedOldFileName = oldFileNameMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         for (const match of matches) {
             const file = this.app.vault.getAbstractFileByPath(match.file);
-            if (!file || !(file instanceof this.app.vault.adapter.constructor)) continue;
+            if (!file || !(file instanceof TFile)) continue;
 
-            const content = await this.app.vault.read(file as any);
-            let newLink: string;
+            const content = await this.app.vault.read(file);
 
-            // Use the exact match text as the pattern to ensure correct replacement
-            const oldPattern = match.linkText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
+            let pattern: string;
             switch (linkType) {
                 case LinkType.BLOCK:
-                    newLink = `[[${newFileName}#^${reference}]]`;
+                    pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#\\^${reference}(\\|[^\\]]+)?\\]\\]`;
                     break;
                 case LinkType.HEADING:
-                    newLink = `[[${newFileName}#${reference}]]`;
+                    pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#${escapedReference}(\\|[^\\]]+)?\\]\\]`;
                     break;
                 default:
-                    newLink = `[[${newFileName}]]`;
+                    pattern = `(!?\\[\\[)${escapedOldFileName}(\\|[^\\]]+)?\\]\\]`;
             }
 
-            console.log(`Replacing in file: ${match.file}`);
-            console.log(`Old Pattern: ${oldPattern}`);
-            console.log(`New Link: ${newLink}`);
+            const regex = new RegExp(pattern, 'g');
 
-            const newContent = content.replace(
-                new RegExp(oldPattern, 'g'),
-                newLink
-            );
+            const newContent = content.replace(regex, (fullMatch, p1, p2, p3) => {
+                const alias = p3 || '';
+                let updatedLink = '';
+                switch (linkType) {
+                    case LinkType.BLOCK:
+                        updatedLink = `${p1}${newFileName}#^${reference}${alias}]]`;
+                        break;
+                    case LinkType.HEADING:
+                        updatedLink = `${p1}${newFileName}#${reference}${alias}]]`;
+                        break;
+                    default:
+                        updatedLink = `${p1}${newFileName}${alias}]]`;
+                }
+                return updatedLink;
+            });
 
             if (content !== newContent) {
-                await this.app.vault.modify(file as any, newContent);
-                console.log(`Replaced content in file: ${match.file}`);
-            } else {
-                console.log(`No replacement needed for file: ${match.file}`);
+                await this.app.vault.modify(file, newContent);
             }
         }
 
