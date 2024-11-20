@@ -351,13 +351,23 @@ export default class LinkMaintainer extends Plugin {
         for (const match of matches) {
             const file = this.app.vault.getAbstractFileByPath(match.file);
             if (!file || !(file instanceof TFile)) continue;
-
+        
             const content = await this.app.vault.read(file);
-
-            // Create a regex that matches the exact link text
-            const escapedLinkText = match.linkText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(escapedLinkText, 'g');
-
+        
+            // Construct a regex to match the link
+            let linkPattern = '';
+            switch (linkType) {
+                case LinkType.BLOCK:
+                    linkPattern = `\\[\\[${oldFileName}\\s*#\\^${reference}(\\|[^\\]]+)?\\]\\]`;
+                    break;
+                case LinkType.HEADING:
+                    linkPattern = `\\[\\[${oldFileName}\\s*#${reference}(\\|[^\\]]+)?\\]\\]`;
+                    break;
+                default:
+                    linkPattern = `\\[\\[${oldFileName}(\\|[^\\]]+)?\\]\\]`;
+            }
+            const regex = new RegExp(linkPattern, 'g');
+        
             let newLinkText = '';
             switch (linkType) {
                 case LinkType.BLOCK:
@@ -369,13 +379,13 @@ export default class LinkMaintainer extends Plugin {
                 default:
                     newLinkText = `[[${newFileName}]]`;
             }
-
+        
             const newContent = content.replace(regex, newLinkText);
-
+        
             if (content !== newContent) {
                 await this.app.vault.modify(file, newContent);
             }
-        }
+        }        
 
         new Notice(`Updated ${matches.length} link(s)`);
     }
