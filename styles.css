@@ -14,14 +14,14 @@
 .link-maintainer-modal .setting-item {
     margin-bottom: 15px;
     display: flex;
-    flex-direction: column; /* Align label and input vertically */
-    align-items: flex-start; /* Align content to the left */
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .link-maintainer-modal select,
 .link-maintainer-modal input {
-    width: 100%; /* Ensure inputs take up the full width */
-    max-width: 400px; /* Optional: Set a max width for better layout */
+    width: 100%;
+    max-width: 400px;
     height: 36px;
     padding: 8px;
     border-radius: 4px;
@@ -29,10 +29,6 @@
     background-color: var(--background-primary);
     color: var(--text-normal);
     box-sizing: border-box;
-}
-
-.link-maintainer-modal select {
-    appearance: none; /* Remove browser-specific styling */
 }
 
 .link-maintainer-modal select:focus,
@@ -53,4 +49,81 @@
 
 .link-maintainer-modal button:hover {
     background-color: var(--interactive-accent-hover);
+}
+
+/* New styles for the improved interface */
+.suggestions-container {
+    margin: 15px 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+}
+
+.suggestions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.suggestions-list li {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.suggestions-list li:last-child {
+    border-bottom: none;
+}
+
+.suggestions-list li:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.suggestion-link {
+    font-weight: 500;
+    color: var(--text-accent);
+}
+
+.suggestion-file {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.file-suggestions {
+    list-style: none;
+    padding: 0;
+    margin: 5px 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.file-suggestions li {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.file-suggestions li:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.preview-container {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background-color: var(--background-primary);
+}
+
+.preview-old,
+.preview-new {
+    margin: 5px 0;
+}
+
+.preview-old strong,
+.preview-new strong {
+    color: var(--text-muted);
+    margin-right: 8px;
 }
