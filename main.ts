@@ -33,33 +33,48 @@ class SearchModal extends Modal {
         const { contentEl } = this;
         contentEl.addClass('link-maintainer-modal');
         contentEl.createEl("h2", { text: "Update Link References" });
-
-        // Link type selector
-        const dropdownContainer = contentEl.createDiv({ cls: 'dropdown setting-item' });
-        dropdownContainer.createEl("label", { text: "Link Type:" });
-
-        const dropdownComponentContainer = dropdownContainer.createDiv({ cls: 'dropdown-component' });
-        const dropdownSelect = dropdownComponentContainer.createEl("select");
-
-        // Add options to the dropdown
-        dropdownSelect.createEl("option", { text: "Note Link ([[filename]])", value: LinkType.NOTE });
-        dropdownSelect.createEl("option", { text: "Block Link ([[filename#^blockid]])", value: LinkType.BLOCK });
-        dropdownSelect.createEl("option", { text: "Heading Link ([[filename#Heading]])", value: LinkType.HEADING });
-
+    
+        // Link type input and dropdown
+        const linkTypeContainer = contentEl.createDiv({ cls: 'setting-item' });
+        linkTypeContainer.createEl("label", { text: "Link Type:" });
+    
+        const linkTypeInputContainer = linkTypeContainer.createDiv({ cls: 'link-type-container' });
+    
+        // Text input for manually entering the link type
+        const linkTypeInput = linkTypeInputContainer.createEl("input", {
+            type: "text",
+            placeholder: "Enter link type (e.g., note)",
+        });
+        linkTypeInput.addEventListener("input", (event: Event) => {
+            this.linkType = (event.target as HTMLInputElement).value as LinkType;
+        });
+    
+        // Dropdown for selecting predefined link types
+        const linkTypeDropdown = linkTypeInputContainer.createEl("select");
+        linkTypeDropdown.createEl("option", { text: "Note Link ([[filename]])", value: LinkType.NOTE });
+        linkTypeDropdown.createEl("option", { text: "Block Link ([[filename#^blockid]])", value: LinkType.BLOCK });
+        linkTypeDropdown.createEl("option", { text: "Heading Link ([[filename#Heading]])", value: LinkType.HEADING });
+    
+        linkTypeDropdown.addEventListener("change", (event: Event) => {
+            const selectedValue = (event.target as HTMLSelectElement).value as LinkType;
+            this.linkType = selectedValue;
+            linkTypeInput.value = selectedValue; // Sync the input box with dropdown selection
+        });
+    
         // Old file name input
         const oldFileContainer = contentEl.createDiv({ cls: 'setting-item' });
         oldFileContainer.createEl("label", { text: "Old File Name:" });
         new TextComponent(oldFileContainer)
             .setPlaceholder("Enter old file name (e.g., fooA)")
             .onChange(value => (this.oldFileName = value));
-
+    
         // New file name input
         const newFileContainer = contentEl.createDiv({ cls: 'setting-item' });
         newFileContainer.createEl("label", { text: "New File Name:" });
         new TextComponent(newFileContainer)
             .setPlaceholder("Enter new file name (e.g., fooB)")
             .onChange(value => (this.newFileName = value));
-
+    
         // Block ID input (conditionally shown)
         const blockContainer = contentEl.createDiv({ cls: 'setting-item' });
         blockContainer.createEl("label", { text: "Block ID:" });
@@ -67,7 +82,7 @@ class SearchModal extends Modal {
             .setPlaceholder("Enter block ID (e.g., bar1234)")
             .onChange(value => (this.blockId = value));
         blockContainer.style.display = 'none'; // Hidden by default
-
+    
         // Heading input (conditionally shown)
         const headingContainer = contentEl.createDiv({ cls: 'setting-item' });
         headingContainer.createEl("label", { text: "Heading:" });
@@ -75,17 +90,15 @@ class SearchModal extends Modal {
             .setPlaceholder("Enter heading text (e.g., Introduction)")
             .onChange(value => (this.headingText = value));
         headingContainer.style.display = 'none'; // Hidden by default
-
-        // Dropdown change handler
-        dropdownSelect.addEventListener("change", (event: Event) => {
+    
+        // Dropdown change logic to toggle Block ID and Heading inputs
+        linkTypeDropdown.addEventListener("change", (event: Event) => {
             const selectedValue = (event.target as HTMLSelectElement).value as LinkType;
-            this.linkType = selectedValue;
-
-            // Toggle visibility of additional inputs based on the selected link type
+    
             blockContainer.style.display = selectedValue === LinkType.BLOCK ? 'flex' : 'none';
             headingContainer.style.display = selectedValue === LinkType.HEADING ? 'flex' : 'none';
         });
-
+    
         // Search button
         const buttonContainer = contentEl.createDiv({ cls: 'setting-item' });
         const searchButton = buttonContainer.createEl("button", { text: "Search" });
@@ -94,7 +107,7 @@ class SearchModal extends Modal {
                 new Notice("Please enter both file names");
                 return;
             }
-
+    
             let reference: string | null = null;
             switch (this.linkType) {
                 case LinkType.BLOCK:
@@ -112,11 +125,11 @@ class SearchModal extends Modal {
                     reference = this.headingText;
                     break;
             }
-
+    
             this.onSubmit(this.oldFileName, this.newFileName, reference, this.linkType);
             this.close();
         });
-    }
+    }    
 
     onClose() {
         const { contentEl } = this;
