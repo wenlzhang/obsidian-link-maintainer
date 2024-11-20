@@ -3,23 +3,32 @@
 }
 
 .link-maintainer-modal label {
-    display: block;
-    margin-bottom: 5px;
     font-weight: 500;
+    min-width: 120px; /* Ensures consistent width */
+    display: inline-block;
+    margin-right: 10px;
 }
 
 .link-maintainer-modal .setting-item {
     margin-bottom: 15px;
+    display: flex;
+    align-items: center; /* Ensures vertical alignment of label and input/select */
+    gap: 10px;
 }
 
 .link-maintainer-modal input,
 .link-maintainer-modal select {
-    width: 100%;
+    width: calc(100% - 140px); /* Adjusts width based on label size */
     padding: 8px;
     border-radius: 4px;
     border: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
     color: var(--text-normal);
+    box-sizing: border-box; /* Ensures consistent padding and width */
+}
+
+.link-maintainer-modal select {
+    appearance: none; /* Removes browser-specific dropdown styles */
 }
 
 .link-maintainer-modal button {
@@ -37,17 +46,13 @@
 }
 
 .link-maintainer-modal .dropdown {
+    display: flex;
+    align-items: center; /* Align label and dropdown vertically */
     margin-bottom: 15px;
 }
 
-.link-maintainer-modal .dropdown label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
 .link-maintainer-modal .dropdown .dropdown-component {
-    width: 100%;
+    flex: 1; /* Ensures the dropdown stretches to occupy remaining space */
 }
 
 .link-maintainer-modal .dropdown .dropdown-component select {
