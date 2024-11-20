@@ -1,9 +1,13 @@
 { 
-  "id": "block-link-updater", 
-  "name": "Block Link Updater", 
-  "version": "0.1.0", 
-  "description": "A plugin to update block links when notes are split.", 
-  "author": "Your Name", 
-  "minAppVersion": "0.9.7", 
-  "isDesktopOnly": true 
+  "id": "obsidian-link-maintainer",
+  "name": "Link Maintainer",
+  "version": "0.0.1",
+  "minAppVersion": "1.0.0",
+  "description": "Help maintain and update links in Obsidian notes when files are renamed.",
+  "author": "wenlzhang",
+  "authorUrl": "https://github.com/wenlzhang",
+	"fundingUrl": {
+      "Buy Me a Coffee": "https://ko-fi.com/f84556"
+    },
+	"isDesktopOnly": false
 }

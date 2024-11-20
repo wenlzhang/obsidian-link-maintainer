@@ -1,0 +1,18 @@
+{
+  "name": "obsidian-link-maintainer",
+  "version": "1.0.0",
+  "description": "Help maintain and update links in Obsidian notes when files are renamed.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production"
+  },
+  "author": "wenlzhang",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "esbuild": "^0.13.15",
+    "obsidian": "latest",
+    "typescript": "^4.4.4"
+  }
+}
