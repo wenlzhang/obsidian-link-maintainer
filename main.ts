@@ -29,73 +29,60 @@ class SearchModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
+        contentEl.addClass('link-maintainer-modal');
         contentEl.createEl("h2", { text: "Update Link References" });
 
         // Link type selector
-        contentEl.createEl("label", { text: "Link Type:" });
-        const linkTypeDropdown = new DropdownComponent(contentEl);
-        linkTypeDropdown
+        const dropdownContainer = contentEl.createDiv({ cls: 'dropdown' });
+        dropdownContainer.createEl("label", { text: "Link Type:" });
+        const linkTypeDropdown = new DropdownComponent(dropdownContainer)
             .addOption(LinkType.NOTE, "Note Link ([[filename]])")
             .addOption(LinkType.BLOCK, "Block Link ([[filename#^blockid]])")
             .addOption(LinkType.HEADING, "Heading Link ([[filename#Heading]])")
             .onChange(value => {
                 this.linkType = value as LinkType;
                 // Show/hide reference inputs based on link type
-                if (blockIdInput && headingInput) {
-                    blockIdInput.inputEl.parentElement.style.display = 
+                if (this.blockIdInput && this.headingInput) {
+                    this.blockIdInput.inputEl.parentElement.style.display = 
                         value === LinkType.BLOCK ? 'block' : 'none';
-                    headingInput.inputEl.parentElement.style.display = 
+                    this.headingInput.inputEl.parentElement.style.display = 
                         value === LinkType.HEADING ? 'block' : 'none';
                 }
             });
 
-        contentEl.createEl("br");
-        contentEl.createEl("br");
-
         // Old file name input
-        contentEl.createEl("label", { text: "Old File Name:" });
-        const oldFileInput = new TextComponent(contentEl)
+        const oldFileContainer = contentEl.createDiv({ cls: 'setting-item' });
+        oldFileContainer.createEl("label", { text: "Old File Name:" });
+        const oldFileInput = new TextComponent(oldFileContainer)
             .setPlaceholder("Enter old file name (e.g., fooA)")
             .onChange(value => this.oldFileName = value);
         
-        contentEl.createEl("br");
-        contentEl.createEl("br");
-
         // New file name input
-        contentEl.createEl("label", { text: "New File Name:" });
-        const newFileInput = new TextComponent(contentEl)
+        const newFileContainer = contentEl.createDiv({ cls: 'setting-item' });
+        newFileContainer.createEl("label", { text: "New File Name:" });
+        const newFileInput = new TextComponent(newFileContainer)
             .setPlaceholder("Enter new file name (e.g., fooB)")
             .onChange(value => this.newFileName = value);
 
-        contentEl.createEl("br");
-        contentEl.createEl("br");
-
         // Block ID input (only shown for block links)
-        contentEl.createEl("label", { text: "Block ID:" });
-        const blockIdInput = new TextComponent(contentEl)
+        const blockContainer = contentEl.createDiv({ cls: 'setting-item' });
+        blockContainer.createEl("label", { text: "Block ID:" });
+        this.blockIdInput = new TextComponent(blockContainer)
             .setPlaceholder("Enter block ID (e.g., bar1234)")
             .onChange(value => this.blockId = value);
-        
-        // Initially hide block ID input
-        blockIdInput.inputEl.parentElement.style.display = 'none';
-
-        contentEl.createEl("br");
-        contentEl.createEl("br");
+        blockContainer.style.display = 'none';
 
         // Heading input (only shown for heading links)
-        contentEl.createEl("label", { text: "Heading:" });
-        const headingInput = new TextComponent(contentEl)
+        const headingContainer = contentEl.createDiv({ cls: 'setting-item' });
+        headingContainer.createEl("label", { text: "Heading:" });
+        this.headingInput = new TextComponent(headingContainer)
             .setPlaceholder("Enter heading text (e.g., Introduction)")
             .onChange(value => this.headingText = value);
-        
-        // Initially hide heading input
-        headingInput.inputEl.parentElement.style.display = 'none';
-
-        contentEl.createEl("br");
-        contentEl.createEl("br");
+        headingContainer.style.display = 'none';
 
         // Search button
-        const searchButton = contentEl.createEl("button", { text: "Search" });
+        const buttonContainer = contentEl.createDiv({ cls: 'setting-item' });
+        const searchButton = buttonContainer.createEl("button", { text: "Search" });
         searchButton.addEventListener("click", () => {
             if (!this.oldFileName || !this.newFileName) {
                 new Notice("Please enter both file names");
@@ -201,10 +188,10 @@ class ResultsModal extends Modal {
     }
 }
 
-export default class BlockLinkUpdater extends Plugin {
+export default class LinkMaintainer extends Plugin {
     async onload() {
         this.addCommand({
-            id: 'update-links',
+            id: 'link-maintainer-update-references',
             name: 'Update Link References',
             callback: () => this.showSearchModal(),
         });
@@ -223,6 +210,9 @@ export default class BlockLinkUpdater extends Plugin {
         const matches: LinkMatch[] = [];
         const files = this.app.vault.getMarkdownFiles();
 
+        // Escape special regex characters in the file name but keep spaces
+        const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         for (const file of files) {
             const content = await this.app.vault.read(file);
             const lines = content.split('\n');
@@ -232,23 +222,24 @@ export default class BlockLinkUpdater extends Plugin {
                 switch (linkType) {
                     case LinkType.BLOCK:
                         // Search for block links in the format [[oldFileName#^blockId]]
-                        pattern = `\\[\\[${oldFileName}#\\^${reference}\\]\\]`;
+                        pattern = `\\[\\[${escapedOldFileName}#\\^${reference}\\]\\]`;
                         break;
                     case LinkType.HEADING:
                         // Search for heading links in the format [[oldFileName#Heading]]
-                        pattern = `\\[\\[${oldFileName}#${reference}\\]\\]`;
+                        pattern = `\\[\\[${escapedOldFileName}#${reference}\\]\\]`;
                         break;
                     default:
                         // Search for note links in the format [[oldFileName]]
-                        pattern = `\\[\\[${oldFileName}\\]\\]`;
+                        pattern = `\\[\\[${escapedOldFileName}\\]\\]`;
                 }
 
-                if (new RegExp(pattern).test(line)) {
+                const match = line.match(new RegExp(pattern));
+                if (match) {
                     matches.push({
                         file: file.path,
                         lineContent: line,
                         lineNumber: index + 1,
-                        linkText: line.match(new RegExp(pattern))?.[0] || ''
+                        linkText: match[0]
                     });
                 }
             });
@@ -273,29 +264,37 @@ export default class BlockLinkUpdater extends Plugin {
             if (!file || !(file instanceof this.app.vault.adapter.constructor)) continue;
 
             const content = await this.app.vault.read(file as any);
-            let oldPattern: string;
             let newLink: string;
+
+            // Use the exact match text as the pattern to ensure correct replacement
+            const oldPattern = match.linkText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             switch (linkType) {
                 case LinkType.BLOCK:
-                    oldPattern = `\\[\\[.*?#\\^${reference}\\]\\]`;
                     newLink = `[[${newFileName}#^${reference}]]`;
                     break;
                 case LinkType.HEADING:
-                    oldPattern = `\\[\\[.*?#${reference}\\]\\]`;
                     newLink = `[[${newFileName}#${reference}]]`;
                     break;
                 default:
-                    oldPattern = `\\[\\[${match.linkText.slice(2, -2)}\\]\\]`;
                     newLink = `[[${newFileName}]]`;
             }
+
+            console.log(`Replacing in file: ${match.file}`);
+            console.log(`Old Pattern: ${oldPattern}`);
+            console.log(`New Link: ${newLink}`);
 
             const newContent = content.replace(
                 new RegExp(oldPattern, 'g'),
                 newLink
             );
 
-            await this.app.vault.modify(file as any, newContent);
+            if (content !== newContent) {
+                await this.app.vault.modify(file as any, newContent);
+                console.log(`Replaced content in file: ${match.file}`);
+            } else {
+                console.log(`No replacement needed for file: ${match.file}`);
+            }
         }
 
         new Notice(`Updated ${matches.length} link(s)`);

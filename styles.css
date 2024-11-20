@@ -1,0 +1,50 @@
+.link-maintainer-modal {
+    padding: 20px;
+}
+
+.link-maintainer-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.link-maintainer-modal .setting-item {
+    margin-bottom: 15px;
+}
+
+.link-maintainer-modal input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.link-maintainer-modal button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.link-maintainer-modal button:hover {
+    background-color: var(--interactive-accent-hover);
+}
+
+.link-maintainer-modal .dropdown {
+    margin-bottom: 15px;
+}
+
+.link-maintainer-modal .dropdown select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+}

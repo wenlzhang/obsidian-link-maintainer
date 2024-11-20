@@ -9,5 +9,6 @@
 	"fundingUrl": {
       "Buy Me a Coffee": "https://ko-fi.com/f84556"
     },
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+  "css": "styles.css"
 }
