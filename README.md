@@ -1,6 +1,8 @@
-# Block Link Maintainer
+# Link Maintainer
 
-An Obsidian plugin that helps you maintain various types of links (note links, heading links, and block references) when splitting or reorganizing notes. This plugin makes it easy to update links across your vault when you move content to different files.
+[![GitHub release (Latest by date)](https://img.shields.io/github/v/release/wenlzhang/obsidian-link-maintainer)](https://github.com/wenlzhang/obsidian-link-maintainer/releases) ![GitHub all releases](https://img.shields.io/github/downloads/wenlzhang/obsidian-link-maintainer/total?color=success)
+
+An [Obsidian](https://obsidian.md/) plugin that helps you maintain various types of links when splitting or reorganizing notes.
 
 ## Features
 
