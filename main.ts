@@ -523,22 +523,31 @@ export default class LinkMaintainer extends Plugin {
             return filePath.split('/').pop()?.replace(/\.md$/, '') || filePath;
         };
 
+        // Helper function to get clean block reference
+        const getCleanBlockRef = (content: string): string => {
+            const match = content.match(/\[\[([^\]]+?)(?:\|[^\]]+)?\]\]|(\^[a-zA-Z0-9]+)/);
+            if (match) {
+                // If it's a full link, return just the path part
+                return match[1] || match[2] || content;
+            }
+            return content;
+        };
+
         // Get the first change to use as an example of the link update
         const exampleChange = batch.changes[0];
-        const originalLink = exampleChange ? exampleChange.originalContent.trim() : '';
-        const updatedLink = exampleChange ? exampleChange.newContent.trim() : '';
+        const originalLink = exampleChange ? getCleanBlockRef(exampleChange.originalContent.trim()) : '';
+        const updatedLink = exampleChange ? getCleanBlockRef(exampleChange.newContent.trim()) : '';
 
         const logEntry = [
             `## Batch Update at ${batch.timestamp}`,
             '',
-            `> Block reference update: ^${batch.blockId} → ${getNoteName(batch.newFileName)}`,
+            `> Block reference update: ${batch.blockId} → ${getNoteName(batch.newFileName)}`,
             '',
             '### Details',
             '',
-            `- **Block ID**: \`^${batch.blockId}\``,
+            `- **Block ID**: \`${batch.blockId}\``,
             `- Original Link: \`${originalLink}\``,
-            `- Updated Link: ${updatedLink}`,
-            `- **New Location**: [[${getNoteName(batch.newFileName)}]]`,
+            `- Updated Link: \`${updatedLink}\``,
             `- **Files Affected**: ${batch.changes.length}`,
             '',
             '### Changes',
