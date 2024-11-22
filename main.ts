@@ -37,6 +37,14 @@ interface LinkChangeLog {
     newFileName: string;
 }
 
+interface BatchChangeLog {
+    timestamp: string;
+    blockId: string;
+    newFileName: string;
+    description: string;
+    changes: LinkChangeLog[];
+}
+
 const DEFAULT_SETTINGS: LinkMaintainerSettings = {
     replaceExistingBlockLinks: false,
     enableChangeLogging: true,
@@ -483,28 +491,54 @@ class LinkMaintainerSettingTab extends PluginSettingTab {
 
 export default class LinkMaintainer extends Plugin {
     settings: LinkMaintainerSettings;
+    private currentBatchLog: BatchChangeLog | null = null;
 
     async logChange(change: LinkChangeLog): Promise<void> {
         if (!this.settings.enableChangeLogging) return;
+        
+        if (this.currentBatchLog) {
+            this.currentBatchLog.changes.push(change);
+        }
+    }
+
+    private initBatchLog(blockId: string, newFileName: string): void {
+        this.currentBatchLog = {
+            timestamp: new Date().toISOString(),
+            blockId: blockId,
+            newFileName: newFileName,
+            description: `Block reference update: ^${blockId} → ${newFileName}`,
+            changes: []
+        };
+    }
+
+    private async writeBatchToLog(): Promise<void> {
+        if (!this.settings.enableChangeLogging || !this.currentBatchLog) return;
 
         const logFile = this.app.vault.getAbstractFileByPath(this.settings.logFilePath);
-        const timestamp = new Date().toISOString();
+        const batch = this.currentBatchLog;
+
         const logEntry = [
-            `## Change at ${timestamp}`,
-            `- **File**: \`${change.originalFile}\``,
-            `- **Line**: ${change.lineNumber + 1}`,
-            `- **Block ID**: \`${change.blockId}\``,
-            `- **Old File**: ${change.oldFileName || 'N/A'}`,
-            `- **New File**: ${change.newFileName}`,
-            '- **Original Content**:',
-            '```',
-            change.originalContent,
-            '```',
-            '- **New Content**:',
-            '```',
-            change.newContent,
-            '```',
-            '---\n'
+            `## Batch Update at ${batch.timestamp}`,
+            `> ${batch.description}`,
+            '',
+            '### Details',
+            `- **Block ID**: \`^${batch.blockId}\``,
+            `- **New Location**: \`${batch.newFileName}\``,
+            `- **Files Affected**: ${batch.changes.length}`,
+            '',
+            '### Changes',
+            ...batch.changes.map(change => [
+                `#### ${change.originalFile}:${change.lineNumber + 1}`,
+                '##### Before:',
+                '```',
+                change.originalContent,
+                '```',
+                '##### After:',
+                '```',
+                change.newContent,
+                '```'
+            ].join('\n')),
+            '\n---\n'
         ].join('\n');
 
         if (!(logFile instanceof TFile)) {
@@ -515,6 +549,9 @@ export default class LinkMaintainer extends Plugin {
             const currentContent = await this.app.vault.read(logFile);
             await this.app.vault.modify(logFile, logEntry + currentContent);
         }
+
+        // Clear the current batch
+        this.currentBatchLog = null;
     }
 
     async showConfirmationDialog(matches: LinkMatch[], newFileName: string): Promise<boolean> {
@@ -761,10 +798,18 @@ export default class LinkMaintainer extends Plugin {
     }
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+        // Initialize batch log
+        if (reference) {
+            this.initBatchLog(reference, newFileName);
+        }
+
         // If confirmation dialog is enabled, show it
         if (this.settings.showConfirmationDialog) {
             const confirmed = await this.showConfirmationDialog(matches, newFileName);
-            if (!confirmed) return;
+            if (!confirmed) {
+                this.currentBatchLog = null; // Clear batch log if cancelled
+                return;
+            }
         }
 
         // Iterate over each match
@@ -808,6 +853,7 @@ export default class LinkMaintainer extends Plugin {
             }
         }
 
-        new Notice(`Updated ${matches.length} reference(s)`);
+        // Write batch log to file
+        await this.writeBatchToLog();
     }
 }
