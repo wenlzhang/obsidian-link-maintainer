@@ -28,9 +28,9 @@ const DEFAULT_SETTINGS: LinkMaintainerSettings = {
 };
 
 function extractBlockInfo(text: string): ExtractedInfo | null {
-    // 匹配完整的块引用链接 [[filename#^blockid]]
+    // Match complete block reference links [[filename#^blockid]]
     const blockLinkRegex = /\[\[([^\]]+)#\^([^\]\|]+)\]\]/;
-    // 匹配单独的 block ID ^blockid
+    // Match standalone block ID ^blockid
     const blockIdRegex = /\^([^\s\]]+)/;
     
     let match = text.match(blockLinkRegex);
@@ -43,7 +43,7 @@ function extractBlockInfo(text: string): ExtractedInfo | null {
     
     match = text.match(blockIdRegex);
     if (match) {
-        // 如果只有 block ID，需要从当前活动文件获取文件名
+        // If only block ID is present, get filename from active file
         const activeFile = app.workspace.getActiveFile();
         if (activeFile) {
             return {
@@ -192,7 +192,7 @@ class ResultsModal extends Modal {
 
         contentEl.createEl('h2', { text: 'Link Maintainer: Update block references' });
 
-        // 显示基本信息
+        // Display basic information
         const infoContainer = contentEl.createEl('div', { cls: 'link-maintainer-info' });
         
         // Block ID
@@ -201,7 +201,7 @@ class ResultsModal extends Modal {
             text: `Block ID: ^${this.reference}`
         });
 
-        // 获取第一个匹配项的旧文件名
+        // Get the old file name from the first match
         const oldFileName = this.matches[0]?.oldFileName || '';
         if (oldFileName) {
             infoContainer.createEl('div', {
@@ -210,13 +210,13 @@ class ResultsModal extends Modal {
             });
         }
         
-        // 新文件名
+        // New file name
         infoContainer.createEl('div', {
             cls: 'link-maintainer-info-item',
             text: `New file name: ${this.newFileName}`
         });
 
-        // 匹配列表标题
+        // Match list title
         contentEl.createEl('h3', { text: 'Found References:' });
 
         const matchList = contentEl.createEl('div', { cls: 'link-maintainer-match-list' });
@@ -224,15 +224,15 @@ class ResultsModal extends Modal {
         this.matches.forEach((match, index) => {
             const matchItem = matchList.createEl('div', { cls: 'link-maintainer-match-item' });
             
-            // 创建文件链接区域
+            // Create file link area
             const fileInfoContainer = matchItem.createEl('div', { cls: 'link-maintainer-file-info' });
             
-            // 显示文件编号
+            // Display file number
             fileInfoContainer.createSpan({
                 text: `File ${index + 1}: `
             });
 
-            // 创建可点击的文件链接
+            // Create clickable file link
             const file = this.app.vault.getAbstractFileByPath(match.file);
             if (file instanceof TFile) {
                 const fileName = file.basename;
@@ -241,7 +241,7 @@ class ResultsModal extends Modal {
                     cls: 'link-maintainer-file-link'
                 });
                 fileLink.addEventListener('click', async (event) => {
-                    // 打开文件并跳转到指定行
+                    // Open file and jump to specified line
                     const leaf = this.app.workspace.getLeaf();
                     await leaf.openFile(file);
                     const view = leaf.view;
@@ -253,20 +253,20 @@ class ResultsModal extends Modal {
                 });
             }
 
-            // 显示行号
+            // Display line number
             matchItem.createEl('div', {
                 cls: 'link-maintainer-line-number',
                 text: `Line ${match.lineNumber + 1}:`
             });
             
-            // 显示包含链接的行内容
+            // Display line content with link
             matchItem.createEl('div', {
                 cls: 'link-maintainer-line-content',
                 text: match.lineContent
             });
         });
 
-        // 添加样式
+        // Add styles
         const style = document.createElement('style');
         style.textContent = `
             .link-maintainer-modal {
@@ -358,11 +358,35 @@ class LinkMaintainerSettingTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Settings for Link Maintainer' });
+        containerEl.createEl('h2', { text: 'Link Maintainer Settings' });
+
+        const descFragment = document.createDocumentFragment();
+        descFragment.append(
+            descFragment.createEl('p', {
+                text: 'When you move a block from one note to another, block references in other notes need to be updated. This setting controls how these link updates are handled:'
+            }),
+            descFragment.createEl('ul', {}).appendChild(
+                createFragment((ul) => {
+                    ul.createEl('li', {
+                        text: 'Off (Default): Only updates links that point to non-existent blocks. For example, if you move block "^123" from "old-note.md" to "new-note.md", only links pointing to "[[old-note#^123]]" will be updated, because that block no longer exists in the old note.'
+                    });
+                    ul.createEl('li', {
+                        text: 'On: Updates all found block references, regardless of whether the block exists in the linked file or not.'
+                    });
+                })
+            ),
+            descFragment.createEl('p', {
+                text: 'Recommendation: Keep this setting off unless you specifically need to update all links. This prevents accidental modifications to valid block references.'
+            }),
+            descFragment.createEl('p', {
+                cls: 'setting-item-description',
+                text: 'Note: This only affects how block references are updated when moving blocks between notes. It does not affect other link maintenance operations.'
+            })
+        );
 
         new Setting(containerEl)
-            .setName('Replace existing block links')
-            .setDesc('Replace existing block links with new links')
+            .setName('Replace All Block References')
+            .setDesc(descFragment)
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.replaceExistingBlockLinks)
@@ -503,11 +527,11 @@ export default class LinkMaintainer extends Plugin {
         const matches: LinkMatch[] = [];
         const files = this.app.vault.getMarkdownFiles();
         
-        // 创建匹配完整 block ID 的正则表达式
+        // Create regex pattern to match block ID references
         const blockIdPattern = new RegExp(`\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]|\\^${blockId}(?=[\\s\\]\\n]|$)`);
         
         for (const file of files) {
-            // 排除新文件名（我们不需要更新新文件中的引用）
+            // Exclude the new file (we don't need to update references in it)
             if (file.basename === excludeFileName) {
                 continue;
             }
@@ -517,20 +541,20 @@ export default class LinkMaintainer extends Plugin {
             
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                // 使用正则表达式匹配完整的 block ID
+                // Use regex to match complete block ID
                 const match = line.match(blockIdPattern);
                 if (match) {
-                    // 提取文件名（如果是完整链接）
+                    // Extract filename (if it's a complete link)
                     const linkMatch = line.match(/\[\[([^\]#|]+)/);
                     const oldFileName = linkMatch ? linkMatch[1].trim() : null;
 
                     if (oldFileName) {
-                        // 检查链接指向的文件中是否存在这个块
+                        // Check if the block exists in the linked file
                         const linkedFile = this.app.vault.getAbstractFileByPath(`${oldFileName}.md`);
                         if (linkedFile instanceof TFile) {
                             const linkedContent = await this.app.vault.read(linkedFile);
                             
-                            // 如果设置为不替换现有块链接，且链接指向的文件中存在这个块，则跳过
+                            // If setting is false and the block exists in the linked file, skip it
                             if (!this.settings.replaceExistingBlockLinks && linkedContent.includes(`^${blockId}`)) {
                                 continue;
                             }
@@ -552,7 +576,7 @@ export default class LinkMaintainer extends Plugin {
     }
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
-        // 遍历每个匹配项
+        // Iterate over each match
         for (const match of matches) {
             const file = this.app.vault.getAbstractFileByPath(match.file);
             if (!(file instanceof TFile)) {
@@ -565,11 +589,11 @@ export default class LinkMaintainer extends Plugin {
             
             let newLine: string;
             if (match.oldFileName) {
-                // 如果有旧文件名，替换完整的链接
+                // If old file name is present, replace complete link
                 const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
                 newLine = line.replace(oldLinkPattern, `[[${newFileName}#^${reference}]]`);
             } else {
-                // 如果只有 block ID，添加完整的链接
+                // If only block ID is present, add complete link
                 const blockIdPattern = new RegExp(`\\^${reference}(?=[\\s\\]\\n]|$)`);
                 newLine = line.replace(blockIdPattern, `[[${newFileName}#^${reference}]]`);
             }
