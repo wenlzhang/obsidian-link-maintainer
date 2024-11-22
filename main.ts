@@ -1,4 +1,4 @@
-import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile } from 'obsidian';
+import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, PluginSettingTab, Setting } from 'obsidian';
 
 interface LinkMatch {
     file: string;
@@ -18,6 +18,14 @@ enum LinkType {
     BLOCK = 'block',
     HEADING = 'heading'
 }
+
+interface LinkMaintainerSettings {
+    replaceExistingBlockLinks: boolean;
+}
+
+const DEFAULT_SETTINGS: LinkMaintainerSettings = {
+    replaceExistingBlockLinks: false
+};
 
 function extractBlockInfo(text: string): ExtractedInfo | null {
     // 匹配完整的块引用链接 [[filename#^blockid]]
@@ -337,8 +345,43 @@ class ResultsModal extends Modal {
     }
 }
 
+class LinkMaintainerSettingTab extends PluginSettingTab {
+    plugin: LinkMaintainer;
+
+    constructor(app: App, plugin: LinkMaintainer) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
+
+    display(): void {
+        const { containerEl } = this;
+
+        containerEl.empty();
+
+        containerEl.createEl('h2', { text: 'Settings for Link Maintainer' });
+
+        new Setting(containerEl)
+            .setName('Replace existing block links')
+            .setDesc('Replace existing block links with new links')
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.replaceExistingBlockLinks)
+                    .onChange(async (value) => {
+                        this.plugin.settings.replaceExistingBlockLinks = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+    }
+}
+
 export default class LinkMaintainer extends Plugin {
+    settings: LinkMaintainerSettings;
+
     async onload() {
+        await this.loadSettings();
+
+        this.addSettingTab(new LinkMaintainerSettingTab(this.app, this));
+
         this.addCommand({
             id: 'link-maintainer-update-references',
             name: 'Update link references',
@@ -370,6 +413,14 @@ export default class LinkMaintainer extends Plugin {
                 this.searchAndUpdateBlockReferences(info.blockId, activeFile.basename);
             }
         });
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
     }
 
     showSearchModal() {
@@ -456,7 +507,7 @@ export default class LinkMaintainer extends Plugin {
         const blockIdPattern = new RegExp(`\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]|\\^${blockId}(?=[\\s\\]\\n]|$)`);
         
         for (const file of files) {
-            // 排除新文件名
+            // 排除新文件名（我们不需要更新新文件中的引用）
             if (file.basename === excludeFileName) {
                 continue;
             }
@@ -469,16 +520,29 @@ export default class LinkMaintainer extends Plugin {
                 // 使用正则表达式匹配完整的 block ID
                 const match = line.match(blockIdPattern);
                 if (match) {
-                    // 如果是完整的链接，提取文件名
+                    // 提取文件名（如果是完整链接）
                     const linkMatch = line.match(/\[\[([^\]#|]+)/);
                     const oldFileName = linkMatch ? linkMatch[1].trim() : null;
+
+                    if (oldFileName) {
+                        // 检查链接指向的文件中是否存在这个块
+                        const linkedFile = this.app.vault.getAbstractFileByPath(`${oldFileName}.md`);
+                        if (linkedFile instanceof TFile) {
+                            const linkedContent = await this.app.vault.read(linkedFile);
+                            
+                            // 如果设置为不替换现有块链接，且链接指向的文件中存在这个块，则跳过
+                            if (!this.settings.replaceExistingBlockLinks && linkedContent.includes(`^${blockId}`)) {
+                                continue;
+                            }
+                        }
+                    }
                     
                     matches.push({
                         file: file.path,
                         lineContent: line,
                         lineNumber: i,
                         linkText: line,
-                        oldFileName: oldFileName // 添加旧文件名信息
+                        oldFileName: oldFileName
                     });
                 }
             }
