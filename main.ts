@@ -5,12 +5,47 @@ interface LinkMatch {
     lineContent: string;
     lineNumber: number;
     linkText: string;
+    oldFileName?: string;
+}
+
+interface ExtractedInfo {
+    blockId: string;
+    fileName: string;
 }
 
 enum LinkType {
     NOTE = 'note',
     BLOCK = 'block',
     HEADING = 'heading'
+}
+
+function extractBlockInfo(text: string): ExtractedInfo | null {
+    // 匹配完整的块引用链接 [[filename#^blockid]]
+    const blockLinkRegex = /\[\[([^\]]+)#\^([^\]\|]+)\]\]/;
+    // 匹配单独的 block ID ^blockid
+    const blockIdRegex = /\^([^\s\]]+)/;
+    
+    let match = text.match(blockLinkRegex);
+    if (match) {
+        return {
+            fileName: match[1],
+            blockId: match[2]
+        };
+    }
+    
+    match = text.match(blockIdRegex);
+    if (match) {
+        // 如果只有 block ID，需要从当前活动文件获取文件名
+        const activeFile = app.workspace.getActiveFile();
+        if (activeFile) {
+            return {
+                fileName: activeFile.basename,
+                blockId: match[1]
+            };
+        }
+    }
+    
+    return null;
 }
 
 class SearchModal extends Modal {
@@ -144,41 +179,52 @@ class ResultsModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.createEl("h2", { text: "Found Links" });
+        contentEl.empty();
+        contentEl.addClass('link-maintainer-modal');
 
-        if (this.matches.length === 0) {
-            contentEl.createEl("p", { text: "No matches found." });
-            return;
-        }
+        contentEl.createEl('h2', { text: 'Found References' });
 
-        // Display matches
-        const matchList = contentEl.createEl("div");
-        this.matches.forEach(match => {
-            const matchEl = matchList.createEl("div", { cls: "link-match" });
-            let newLink: string;
+        const matchList = contentEl.createEl('div', { cls: 'link-maintainer-match-list' });
+
+        this.matches.forEach((match, index) => {
+            const matchItem = matchList.createEl('div', { cls: 'link-maintainer-match-item' });
             
-            switch (this.linkType) {
-                case LinkType.BLOCK:
-                    newLink = `[[${this.newFileName}#^${this.reference}]]`;
-                    break;
-                case LinkType.HEADING:
-                    newLink = `[[${this.newFileName}#${this.reference}]]`;
-                    break;
-                default:
-                    newLink = `[[${this.newFileName}]]`;
+            // 显示文件路径
+            matchItem.createEl('div', { 
+                cls: 'link-maintainer-file-path',
+                text: `File: ${match.file}`
+            });
+            
+            // 显示旧文件名（如果存在）
+            if (match.oldFileName) {
+                matchItem.createEl('div', {
+                    cls: 'link-maintainer-old-filename',
+                    text: `Old File Name: ${match.oldFileName}`
+                });
             }
             
-            matchEl.createEl("p", { 
-                text: `File: ${match.file}\nLine ${match.lineNumber}: ${match.lineContent}\nWill be replaced with: ${newLink}` 
+            // 显示包含链接的行内容
+            matchItem.createEl('div', {
+                cls: 'link-maintainer-line-content',
+                text: `Line ${match.lineNumber + 1}: ${match.lineContent}`
             });
         });
 
-        contentEl.createEl("br");
+        const buttonContainer = contentEl.createEl('div', { cls: 'link-maintainer-button-container' });
 
-        // Confirm button
-        const confirmButton = contentEl.createEl("button", { text: "Confirm Replacement" });
-        confirmButton.addEventListener("click", () => {
+        const confirmButton = buttonContainer.createEl('button', {
+            text: 'Update References',
+            cls: 'mod-cta'
+        });
+        confirmButton.addEventListener('click', () => {
+            this.close();
             this.onConfirm(this.matches, this.newFileName, this.reference, this.linkType);
+        });
+
+        const cancelButton = buttonContainer.createEl('button', {
+            text: 'Cancel'
+        });
+        cancelButton.addEventListener('click', () => {
             this.close();
         });
     }
@@ -196,6 +242,32 @@ export default class LinkMaintainer extends Plugin {
             name: 'Update Link References',
             callback: () => this.showSearchModal(),
         });
+
+        this.addCommand({
+            id: 'update-block-references',
+            name: 'Update Block References from Selection',
+            editorCallback: (editor) => {
+                const selection = editor.getSelection();
+                if (!selection) {
+                    new Notice('Please select some text first');
+                    return;
+                }
+
+                const info = extractBlockInfo(selection);
+                if (!info) {
+                    new Notice('No valid block ID found in selection');
+                    return;
+                }
+
+                const activeFile = this.app.workspace.getActiveFile();
+                if (!activeFile) {
+                    new Notice('No active file');
+                    return;
+                }
+
+                this.searchAndUpdateBlockReferences(info.blockId, activeFile.basename);
+            }
+        });
     }
 
     showSearchModal() {
@@ -211,7 +283,6 @@ export default class LinkMaintainer extends Plugin {
         const matches: LinkMatch[] = [];
         const files = this.app.vault.getMarkdownFiles();
 
-        // Escape special regex characters in the file name but keep spaces
         const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const escapedReference = reference ? reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
 
@@ -239,14 +310,13 @@ export default class LinkMaintainer extends Plugin {
                     matches.push({
                         file: file.path,
                         lineContent: line,
-                        lineNumber: index + 1,
+                        lineNumber: index,
                         linkText: match[0],
                     });
                 }
             });
         }
 
-        // Show results modal
         new ResultsModal(
             this.app, 
             matches, 
@@ -259,56 +329,91 @@ export default class LinkMaintainer extends Plugin {
         ).open();
     }
 
-    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
-        // Extract the old file name from the first match
-        const oldFileNameMatch = matches[0].linkText.match(/^\[\[!?([^\#\|\]]+)/);
-        if (!oldFileNameMatch) {
-            new Notice("Failed to extract old file name from link.");
+    async searchAndUpdateBlockReferences(blockId: string, newFileName: string) {
+        const matches = await this.searchBlockReferences(blockId, newFileName);
+        if (matches.length === 0) {
+            new Notice('No references found');
             return;
         }
-        const escapedOldFileName = oldFileNameMatch[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        for (const match of matches) {
-            const file = this.app.vault.getAbstractFileByPath(match.file);
-            if (!file || !(file instanceof TFile)) continue;
+        new ResultsModal(
+            this.app,
+            matches,
+            newFileName,
+            blockId,
+            LinkType.BLOCK,
+            this.replaceLinks.bind(this)
+        ).open();
+    }
 
-            const content = await this.app.vault.read(file);
-
-            let pattern: string;
-            switch (linkType) {
-                case LinkType.BLOCK:
-                    pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#\\^${reference}(\\|[^\\]]+)?\\]\\]`;
-                    break;
-                case LinkType.HEADING:
-                    pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#${escapedReference}(\\|[^\\]]+)?\\]\\]`;
-                    break;
-                default:
-                    pattern = `(!?\\[\\[)${escapedOldFileName}(\\|[^\\]]+)?\\]\\]`;
+    async searchBlockReferences(blockId: string, excludeFileName: string): Promise<LinkMatch[]> {
+        const matches: LinkMatch[] = [];
+        const files = this.app.vault.getMarkdownFiles();
+        
+        // 创建匹配完整 block ID 的正则表达式
+        const blockIdPattern = new RegExp(`\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]|\\^${blockId}(?=[\\s\\]\\n]|$)`);
+        
+        for (const file of files) {
+            // 排除新文件名
+            if (file.basename === excludeFileName) {
+                continue;
             }
 
-            const regex = new RegExp(pattern, 'g');
-
-            const newContent = content.replace(regex, (fullMatch, p1, p2, p3) => {
-                const alias = p3 || '';
-                let updatedLink = '';
-                switch (linkType) {
-                    case LinkType.BLOCK:
-                        updatedLink = `${p1}${newFileName}#^${reference}${alias}]]`;
-                        break;
-                    case LinkType.HEADING:
-                        updatedLink = `${p1}${newFileName}#${reference}${alias}]]`;
-                        break;
-                    default:
-                        updatedLink = `${p1}${newFileName}${alias}]]`;
+            const content = await this.app.vault.read(file);
+            const lines = content.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // 使用正则表达式匹配完整的 block ID
+                const match = line.match(blockIdPattern);
+                if (match) {
+                    // 如果是完整的链接，提取文件名
+                    const linkMatch = line.match(/\[\[([^\]#|]+)/);
+                    const oldFileName = linkMatch ? linkMatch[1].trim() : null;
+                    
+                    matches.push({
+                        file: file.path,
+                        lineContent: line,
+                        lineNumber: i,
+                        linkText: line,
+                        oldFileName: oldFileName // 添加旧文件名信息
+                    });
                 }
-                return updatedLink;
-            });
+            }
+        }
+        
+        return matches;
+    }
 
-            if (content !== newContent) {
-                await this.app.vault.modify(file, newContent);
+    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+        // 遍历每个匹配项
+        for (const match of matches) {
+            const file = this.app.vault.getAbstractFileByPath(match.file);
+            if (!(file instanceof TFile)) {
+                continue;
+            }
+
+            const content = await this.app.vault.read(file);
+            const lines = content.split('\n');
+            const line = lines[match.lineNumber];
+            
+            let newLine: string;
+            if (match.oldFileName) {
+                // 如果有旧文件名，替换完整的链接
+                const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
+                newLine = line.replace(oldLinkPattern, `[[${newFileName}#^${reference}]]`);
+            } else {
+                // 如果只有 block ID，添加完整的链接
+                const blockIdPattern = new RegExp(`\\^${reference}(?=[\\s\\]\\n]|$)`);
+                newLine = line.replace(blockIdPattern, `[[${newFileName}#^${reference}]]`);
+            }
+            
+            if (newLine !== line) {
+                lines[match.lineNumber] = newLine;
+                await this.app.vault.modify(file, lines.join('\n'));
             }
         }
 
-        new Notice(`Updated ${matches.length} link(s)`);
+        new Notice(`Updated ${matches.length} reference(s)`);
     }
 }
