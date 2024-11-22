@@ -21,10 +21,27 @@ enum LinkType {
 
 interface LinkMaintainerSettings {
     replaceExistingBlockLinks: boolean;
+    enableChangeLogging: boolean;
+    logFilePath: string;
+    showConfirmationDialog: boolean;
+}
+
+interface LinkChangeLog {
+    timestamp: string;
+    originalFile: string;
+    lineNumber: number;
+    originalContent: string;
+    newContent: string;
+    blockId: string;
+    oldFileName: string | null;
+    newFileName: string;
 }
 
 const DEFAULT_SETTINGS: LinkMaintainerSettings = {
-    replaceExistingBlockLinks: false
+    replaceExistingBlockLinks: false,
+    enableChangeLogging: true,
+    logFilePath: 'link-maintainer-changes.md',
+    showConfirmationDialog: true
 };
 
 function extractBlockInfo(text: string): ExtractedInfo | null {
@@ -359,7 +376,59 @@ class LinkMaintainerSettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'Link Maintainer Settings' });
 
-        // Add main setting
+        // Safety Settings Section
+        containerEl.createEl('h3', { 
+            text: 'Safety Settings',
+            attr: { style: 'margin-top: 24px; margin-bottom: 12px;' }
+        });
+
+        // Show confirmation dialog setting
+        new Setting(containerEl)
+            .setName('Show Confirmation Dialog')
+            .setDesc('Show a confirmation dialog before updating block references')
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.showConfirmationDialog)
+                    .onChange(async (value) => {
+                        this.plugin.settings.showConfirmationDialog = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // Enable change logging setting
+        new Setting(containerEl)
+            .setName('Enable Change Logging')
+            .setDesc('Keep a record of all link updates in a log file')
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.enableChangeLogging)
+                    .onChange(async (value) => {
+                        this.plugin.settings.enableChangeLogging = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // Log file path setting
+        new Setting(containerEl)
+            .setName('Log File Path')
+            .setDesc('Path to the log file (relative to vault root)')
+            .addText((text) => {
+                text
+                    .setPlaceholder('link-maintainer-changes.md')
+                    .setValue(this.plugin.settings.logFilePath)
+                    .onChange(async (value) => {
+                        this.plugin.settings.logFilePath = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // Link Update Settings Section
+        containerEl.createEl('h3', { 
+            text: 'Link Update Settings',
+            attr: { style: 'margin-top: 24px; margin-bottom: 12px;' }
+        });
+
+        // Original replace all block references setting
         new Setting(containerEl)
             .setName('Replace All Block References')
             .setDesc('Controls how block references are updated when moving blocks between notes.')
@@ -414,6 +483,108 @@ class LinkMaintainerSettingTab extends PluginSettingTab {
 
 export default class LinkMaintainer extends Plugin {
     settings: LinkMaintainerSettings;
+
+    async logChange(change: LinkChangeLog): Promise<void> {
+        if (!this.settings.enableChangeLogging) return;
+
+        const logFile = this.app.vault.getAbstractFileByPath(this.settings.logFilePath);
+        const timestamp = new Date().toISOString();
+        const logEntry = [
+            `## Change at ${timestamp}`,
+            `- **File**: \`${change.originalFile}\``,
+            `- **Line**: ${change.lineNumber + 1}`,
+            `- **Block ID**: \`${change.blockId}\``,
+            `- **Old File**: ${change.oldFileName || 'N/A'}`,
+            `- **New File**: ${change.newFileName}`,
+            '- **Original Content**:',
+            '```',
+            change.originalContent,
+            '```',
+            '- **New Content**:',
+            '```',
+            change.newContent,
+            '```',
+            '---\n'
+        ].join('\n');
+
+        if (!(logFile instanceof TFile)) {
+            // Create log file if it doesn't exist
+            await this.app.vault.create(this.settings.logFilePath, logEntry);
+        } else {
+            // Append to existing log file
+            const currentContent = await this.app.vault.read(logFile);
+            await this.app.vault.modify(logFile, logEntry + currentContent);
+        }
+    }
+
+    async showConfirmationDialog(matches: LinkMatch[], newFileName: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            const modal = new Modal(this.app);
+            modal.titleEl.setText('Confirm Link Updates');
+            
+            const content = modal.contentEl;
+            content.empty();
+            
+            content.createEl('p', {
+                text: `You are about to update ${matches.length} block reference${matches.length > 1 ? 's' : ''} to point to "${newFileName}".`,
+                attr: { style: 'margin-bottom: 12px;' }
+            });
+
+            if (matches.length > 0) {
+                const list = content.createEl('div', {
+                    cls: 'link-maintainer-changes-list',
+                    attr: { style: 'max-height: 200px; overflow-y: auto; margin-bottom: 12px; padding: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px;' }
+                });
+
+                matches.forEach((match, index) => {
+                    const item = list.createEl('div', {
+                        attr: { style: 'margin-bottom: 8px; font-size: 0.9em;' }
+                    });
+                    item.createEl('div', {
+                        text: `${index + 1}. In file: ${match.file}`,
+                        attr: { style: 'color: var(--text-muted);' }
+                    });
+                    item.createEl('div', {
+                        text: match.lineContent,
+                        attr: { style: 'font-family: monospace; white-space: pre-wrap; margin-top: 4px;' }
+                    });
+                });
+            }
+
+            const warningEl = content.createEl('p', {
+                cls: 'link-maintainer-warning',
+                text: 'This action cannot be automatically undone. Changes will be logged if logging is enabled.',
+                attr: { style: 'color: var(--text-warning); margin-bottom: 12px;' }
+            });
+
+            // Buttons container
+            const buttonContainer = content.createEl('div', {
+                attr: { style: 'display: flex; justify-content: flex-end; gap: 8px;' }
+            });
+
+            // Cancel button
+            buttonContainer.createEl('button', {
+                text: 'Cancel',
+                attr: { style: 'padding: 4px 12px;' }
+            }).onclick = () => {
+                modal.close();
+                resolve(false);
+            };
+
+            // Confirm button
+            const confirmButton = buttonContainer.createEl('button', {
+                cls: 'mod-cta',
+                text: 'Confirm Updates',
+                attr: { style: 'padding: 4px 12px;' }
+            });
+            confirmButton.onclick = () => {
+                modal.close();
+                resolve(true);
+            };
+
+            modal.open();
+        });
+    }
 
     async onload() {
         await this.loadSettings();
@@ -590,6 +761,12 @@ export default class LinkMaintainer extends Plugin {
     }
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+        // If confirmation dialog is enabled, show it
+        if (this.settings.showConfirmationDialog) {
+            const confirmed = await this.showConfirmationDialog(matches, newFileName);
+            if (!confirmed) return;
+        }
+
         // Iterate over each match
         for (const match of matches) {
             const file = this.app.vault.getAbstractFileByPath(match.file);
@@ -613,6 +790,19 @@ export default class LinkMaintainer extends Plugin {
             }
             
             if (newLine !== line) {
+                // Log the change
+                await this.logChange({
+                    timestamp: new Date().toISOString(),
+                    originalFile: match.file,
+                    lineNumber: match.lineNumber,
+                    originalContent: line,
+                    newContent: newLine,
+                    blockId: reference || '',
+                    oldFileName: match.oldFileName,
+                    newFileName: newFileName
+                });
+
+                // Update the line
                 lines[match.lineNumber] = newLine;
                 await this.app.vault.modify(file, lines.join('\n'));
             }
