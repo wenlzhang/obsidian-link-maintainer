@@ -355,38 +355,14 @@ class LinkMaintainerSettingTab extends PluginSettingTab {
 
     display(): void {
         const { containerEl } = this;
-
         containerEl.empty();
 
         containerEl.createEl('h2', { text: 'Link Maintainer Settings' });
 
-        const descFragment = document.createDocumentFragment();
-        descFragment.append(
-            descFragment.createEl('p', {
-                text: 'When you move a block from one note to another, block references in other notes need to be updated. This setting controls how these link updates are handled:'
-            }),
-            descFragment.createEl('ul', {}).appendChild(
-                createFragment((ul) => {
-                    ul.createEl('li', {
-                        text: 'Off (Default): Only updates links that point to non-existent blocks. For example, if you move block "^123" from "old-note.md" to "new-note.md", only links pointing to "[[old-note#^123]]" will be updated, because that block no longer exists in the old note.'
-                    });
-                    ul.createEl('li', {
-                        text: 'On: Updates all found block references, regardless of whether the block exists in the linked file or not.'
-                    });
-                })
-            ),
-            descFragment.createEl('p', {
-                text: 'Recommendation: Keep this setting off unless you specifically need to update all links. This prevents accidental modifications to valid block references.'
-            }),
-            descFragment.createEl('p', {
-                cls: 'setting-item-description',
-                text: 'Note: This only affects how block references are updated when moving blocks between notes. It does not affect other link maintenance operations.'
-            })
-        );
-
+        // Add main setting
         new Setting(containerEl)
             .setName('Replace All Block References')
-            .setDesc(descFragment)
+            .setDesc('Controls how block references are updated when moving blocks between notes.')
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.replaceExistingBlockLinks)
@@ -395,6 +371,44 @@ class LinkMaintainerSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     });
             });
+
+        // Add detailed explanation in a separate container
+        const explanationEl = containerEl.createEl('div', {
+            cls: 'setting-item-description',
+            attr: { style: 'margin-top: 12px; border-left: 2px solid var(--background-modifier-border); padding-left: 12px;' }
+        });
+
+        // Behavior explanation
+        explanationEl.createEl('div', {
+            cls: 'setting-item-heading',
+            text: 'Behavior',
+            attr: { style: 'margin-bottom: 8px; color: var(--text-muted);' }
+        });
+
+        // Off state explanation
+        const offEl = explanationEl.createEl('div', {
+            attr: { style: 'margin-bottom: 8px;' }
+        });
+        offEl.createEl('strong', { text: 'When OFF (Default): ' });
+        offEl.createSpan({ text: 'Only updates links to blocks that no longer exist in their original location.' });
+
+        // On state explanation
+        const onEl = explanationEl.createEl('div', {
+            attr: { style: 'margin-bottom: 12px;' }
+        });
+        onEl.createEl('strong', { text: 'When ON: ' });
+        onEl.createSpan({ text: 'Updates all block references, even if the block still exists in its original location.' });
+
+        // Example
+        explanationEl.createEl('div', {
+            cls: 'setting-item-heading',
+            text: 'Example',
+            attr: { style: 'margin-bottom: 8px; color: var(--text-muted);' }
+        });
+        explanationEl.createEl('div', {
+            text: 'If you move block ^123 from "note-a" to "note-b", links like [[note-a#^123]] will be updated to [[note-b#^123]].',
+            attr: { style: 'font-size: 0.9em; color: var(--text-muted);' }
+        });
     }
 }
 
