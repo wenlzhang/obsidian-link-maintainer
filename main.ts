@@ -182,7 +182,7 @@ class ResultsModal extends Modal {
         contentEl.empty();
         contentEl.addClass('link-maintainer-modal');
 
-        contentEl.createEl('h2', { text: 'Link Maintainer: Update block references from selection' });
+        contentEl.createEl('h2', { text: 'Link Maintainer: Update block references' });
 
         // 显示基本信息
         const infoContainer = contentEl.createEl('div', { cls: 'link-maintainer-info' });
@@ -216,10 +216,39 @@ class ResultsModal extends Modal {
         this.matches.forEach((match, index) => {
             const matchItem = matchList.createEl('div', { cls: 'link-maintainer-match-item' });
             
-            // 显示文件和行号
-            matchItem.createEl('div', { 
-                cls: 'link-maintainer-file-info',
-                text: `File ${index + 1}, line ${match.lineNumber + 1}:`
+            // 创建文件链接区域
+            const fileInfoContainer = matchItem.createEl('div', { cls: 'link-maintainer-file-info' });
+            
+            // 显示文件编号
+            fileInfoContainer.createSpan({
+                text: `File ${index + 1}: `
+            });
+
+            // 创建可点击的文件链接
+            const file = this.app.vault.getAbstractFileByPath(match.file);
+            if (file instanceof TFile) {
+                const fileName = file.basename;
+                const fileLink = fileInfoContainer.createEl('a', {
+                    text: `[[${fileName}]]`,
+                    cls: 'link-maintainer-file-link'
+                });
+                fileLink.addEventListener('click', async (event) => {
+                    // 打开文件并跳转到指定行
+                    const leaf = this.app.workspace.getLeaf();
+                    await leaf.openFile(file);
+                    const view = leaf.view;
+                    if (view.editor) {
+                        const pos = { line: match.lineNumber, ch: 0 };
+                        view.editor.setCursor(pos);
+                        view.editor.scrollIntoView({ from: pos, to: pos }, true);
+                    }
+                });
+            }
+
+            // 显示行号
+            matchItem.createEl('div', {
+                cls: 'link-maintainer-line-number',
+                text: `Line ${match.lineNumber + 1}:`
             });
             
             // 显示包含链接的行内容
@@ -249,11 +278,23 @@ class ResultsModal extends Modal {
                 margin-top: 10px;
             }
             .link-maintainer-match-item {
-                margin: 15px 0;
+                margin: 20px 0;
             }
             .link-maintainer-file-info {
                 font-weight: bold;
                 margin-bottom: 5px;
+            }
+            .link-maintainer-file-link {
+                color: var(--text-accent);
+                text-decoration: none;
+                cursor: pointer;
+            }
+            .link-maintainer-file-link:hover {
+                text-decoration: underline;
+            }
+            .link-maintainer-line-number {
+                margin: 5px 0;
+                color: var(--text-muted);
             }
             .link-maintainer-line-content {
                 font-family: var(--font-monospace);
