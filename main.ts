@@ -517,28 +517,37 @@ export default class LinkMaintainer extends Plugin {
         const logFile = this.app.vault.getAbstractFileByPath(this.settings.logFilePath);
         const batch = this.currentBatchLog;
 
+        // Helper function to get clean note name for links
+        const getNoteName = (filePath: string): string => {
+            // Remove folders and extension, get just the note name
+            return filePath.split('/').pop()?.replace(/\.md$/, '') || filePath;
+        };
+
+        // Get the first change to use as an example of the link update
+        const exampleChange = batch.changes[0];
+        const originalLink = exampleChange ? exampleChange.originalContent.trim() : '';
+        const updatedLink = exampleChange ? exampleChange.newContent.trim() : '';
+
         const logEntry = [
             `## Batch Update at ${batch.timestamp}`,
-            `> ${batch.description}`,
+            '',
+            `> Block reference update: ^${batch.blockId} → ${getNoteName(batch.newFileName)}`,
             '',
             '### Details',
+            '',
             `- **Block ID**: \`^${batch.blockId}\``,
-            `- **New Location**: \`${batch.newFileName}\``,
+            `- Original Link: \`${originalLink}\``,
+            `- Updated Link: ${updatedLink}`,
+            `- **New Location**: [[${getNoteName(batch.newFileName)}]]`,
             `- **Files Affected**: ${batch.changes.length}`,
             '',
             '### Changes',
-            ...batch.changes.map(change => [
-                `#### ${change.originalFile}:${change.lineNumber + 1}`,
-                '##### Before:',
-                '```',
-                change.originalContent,
-                '```',
-                '##### After:',
-                '```',
-                change.newContent,
-                '```'
-            ].join('\n')),
-            '\n---\n'
+            '',
+            batch.changes.map(change => 
+                `- [[${getNoteName(change.originalFile)}]] (Line ${change.lineNumber + 1})`
+            ).join('\n'),
+            '',
+            '---\n'
         ].join('\n');
 
         if (!(logFile instanceof TFile)) {
