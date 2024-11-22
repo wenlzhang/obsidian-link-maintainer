@@ -63,7 +63,7 @@ class SearchModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         contentEl.addClass('link-maintainer-modal');
-        contentEl.createEl("h2", { text: "Update Link References" });
+        contentEl.createEl("h2", { text: "Link Maintainer: Update Link References" });
 
         // Link type dropdown
         const linkTypeContainer = contentEl.createDiv({ cls: 'setting-item' });
@@ -182,35 +182,103 @@ class ResultsModal extends Modal {
         contentEl.empty();
         contentEl.addClass('link-maintainer-modal');
 
-        contentEl.createEl('h2', { text: 'Found References' });
+        contentEl.createEl('h2', { text: 'Link Maintainer: Update block references from selection' });
+
+        // 显示基本信息
+        const infoContainer = contentEl.createEl('div', { cls: 'link-maintainer-info' });
+        
+        // Block ID
+        infoContainer.createEl('div', {
+            cls: 'link-maintainer-info-item',
+            text: `Block ID: ^${this.reference}`
+        });
+
+        // 获取第一个匹配项的旧文件名
+        const oldFileName = this.matches[0]?.oldFileName || '';
+        if (oldFileName) {
+            infoContainer.createEl('div', {
+                cls: 'link-maintainer-info-item',
+                text: `Old file name: ${oldFileName}`
+            });
+        }
+        
+        // 新文件名
+        infoContainer.createEl('div', {
+            cls: 'link-maintainer-info-item',
+            text: `New file name: ${this.newFileName}`
+        });
+
+        // 匹配列表标题
+        contentEl.createEl('h3', { text: 'Found References:' });
 
         const matchList = contentEl.createEl('div', { cls: 'link-maintainer-match-list' });
 
         this.matches.forEach((match, index) => {
             const matchItem = matchList.createEl('div', { cls: 'link-maintainer-match-item' });
             
-            // 显示文件路径
+            // 显示文件和行号
             matchItem.createEl('div', { 
-                cls: 'link-maintainer-file-path',
-                text: `File: ${match.file}`
+                cls: 'link-maintainer-file-info',
+                text: `File ${index + 1}, line ${match.lineNumber + 1}:`
             });
-            
-            // 显示旧文件名（如果存在）
-            if (match.oldFileName) {
-                matchItem.createEl('div', {
-                    cls: 'link-maintainer-old-filename',
-                    text: `Old File Name: ${match.oldFileName}`
-                });
-            }
             
             // 显示包含链接的行内容
             matchItem.createEl('div', {
                 cls: 'link-maintainer-line-content',
-                text: `Line ${match.lineNumber + 1}: ${match.lineContent}`
+                text: match.lineContent
             });
         });
 
+        // 添加样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .link-maintainer-modal {
+                padding: 20px;
+            }
+            .link-maintainer-info {
+                margin-bottom: 20px;
+                padding: 10px;
+                background-color: var(--background-secondary);
+                border-radius: 5px;
+            }
+            .link-maintainer-info-item {
+                margin: 5px 0;
+                font-family: var(--font-monospace);
+            }
+            .link-maintainer-match-list {
+                margin-top: 10px;
+            }
+            .link-maintainer-match-item {
+                margin: 15px 0;
+            }
+            .link-maintainer-file-info {
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .link-maintainer-line-content {
+                font-family: var(--font-monospace);
+                padding: 5px;
+                background-color: var(--background-secondary);
+                border-radius: 3px;
+                white-space: pre-wrap;
+            }
+            .link-maintainer-button-container {
+                margin-top: 20px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+        `;
+        document.head.appendChild(style);
+
         const buttonContainer = contentEl.createEl('div', { cls: 'link-maintainer-button-container' });
+
+        const cancelButton = buttonContainer.createEl('button', {
+            text: 'Cancel'
+        });
+        cancelButton.addEventListener('click', () => {
+            this.close();
+        });
 
         const confirmButton = buttonContainer.createEl('button', {
             text: 'Update References',
@@ -219,13 +287,6 @@ class ResultsModal extends Modal {
         confirmButton.addEventListener('click', () => {
             this.close();
             this.onConfirm(this.matches, this.newFileName, this.reference, this.linkType);
-        });
-
-        const cancelButton = buttonContainer.createEl('button', {
-            text: 'Cancel'
-        });
-        cancelButton.addEventListener('click', () => {
-            this.close();
         });
     }
 
@@ -239,13 +300,13 @@ export default class LinkMaintainer extends Plugin {
     async onload() {
         this.addCommand({
             id: 'link-maintainer-update-references',
-            name: 'Update Link References',
+            name: 'Update link references',
             callback: () => this.showSearchModal(),
         });
 
         this.addCommand({
             id: 'update-block-references',
-            name: 'Update Block References from Selection',
+            name: 'Update block references from selection',
             editorCallback: (editor) => {
                 const selection = editor.getSelection();
                 if (!selection) {
