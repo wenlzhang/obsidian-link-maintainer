@@ -14,6 +14,8 @@ An [Obsidian](https://obsidian.md/) plugin that helps you maintain various types
 - Update file paths while preserving headings and block IDs
 - Preview changes before applying them
 - Batch update all references at once
+- Change logging to track all link updates
+- Configurable settings for link replacement behavior
 
 ## Use Cases
 
@@ -59,11 +61,31 @@ Before: [[oldNote#^abc123]]
 After:  [[newNote#^abc123]]
 ```
 
+## Settings
+
+The plugin offers several configurable settings:
+
+- **Replace Existing Block Links**: Toggle whether to replace block links that already exist in the target file
+- **Enable Change Logging**: Track all link updates in a log file
+- **Log File Path**: Specify the location of the change log file (default: 'link-maintainer-changes.md')
+- **Show Confirmation Dialog**: Enable/disable confirmation dialog before applying changes
+
+## Change Logging
+
+When enabled, the plugin maintains a detailed log of all link updates, including:
+- Timestamp of changes
+- Original and new file names
+- Line numbers and content changes
+- Block IDs (for block references)
+- Batch operation details
+
+The log file helps you track and review all link modifications made through the plugin.
+
 ## Installation
 
 1. Open Obsidian Settings
 2. Navigate to Community Plugins and disable Safe Mode
-3. Click Browse and search for "Block Link Maintainer"
+3. Click Browse and search for "Link Maintainer"
 4. Install the plugin
 5. Enable the plugin in your Community Plugins list
 
@@ -73,7 +95,8 @@ This plugin is built using the Obsidian Plugin API. To build from source:
 
 1. Clone this repository
 2. Run `npm install`
-3. Run `npm run build`
+3. Run `npm run dev` for development builds
+4. Run `npm run build` for production builds
 
 ## Support
 
