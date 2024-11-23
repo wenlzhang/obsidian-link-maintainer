@@ -23,7 +23,7 @@ An [Obsidian](https://obsidian.md/) plugin that helps you maintain various types
   - Track original and new link locations
   - Maintain history of all modifications
 
-## Use Cases
+## Usage
 
 ### When You Split Notes
 If you have a large note that you split into smaller notes, links in other notes might become invalid. This plugin helps you update those references to point to the new location.
@@ -114,19 +114,10 @@ The plugin provides several settings to customize its behavior:
 4. Install the plugin
 5. Enable the plugin in your Community Plugins list
 
-## Development
-
-This plugin is built using the Obsidian Plugin API. To build from source:
-
-1. Clone this repository
-2. Run `npm install`
-3. Run `npm run dev` for development builds
-4. Run `npm run build` for production builds
-
-## Support
-
-If you encounter any issues or have suggestions for improvements, please open an issue on the GitHub repository.
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for more information.
+
+## Support me
+
+<a href='https://ko-fi.com/C0C66C1TB' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
