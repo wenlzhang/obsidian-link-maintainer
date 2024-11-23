@@ -6,16 +6,22 @@ An [Obsidian](https://obsidian.md/) plugin that helps you maintain various types
 
 ## Features
 
-- Search for and update three types of links:
-  - Regular note links (e.g., `[[filename]]`)
-  - Heading links (e.g., `[[filename#Heading]]`)
-  - Block references (e.g., `[[filename#^blockid]]`)
-- Search for specific references across your entire vault
-- Update file paths while preserving headings and block IDs
-- Preview changes before applying them
-- Batch update all references at once
-- Change logging to track all link updates
-- Configurable settings for link replacement behavior
+- **Update three types of Obsidian links**:
+  - Note links (`[[filename]]`)
+  - Heading links (`[[filename#Heading]]`)
+  - Block references (`[[filename#^blockid]]`)
+- **Smart block reference handling**:
+  - Update block references directly from selected text
+  - Option to replace or preserve existing block links
+  - Maintains block IDs while updating file paths
+- **Safe updates**:
+  - Preview all changes before applying
+  - Confirmation dialog for reviewing updates
+  - Changes can be reviewed and confirmed in batches
+- **Change tracking**:
+  - Detailed logging of all link updates
+  - Track original and new link locations
+  - Maintain history of all modifications
 
 ## Use Cases
 
@@ -27,19 +33,42 @@ When reorganizing your vault structure or renaming files, you can easily update 
 
 ## How to Use
 
-1. Open the Command Palette (`Cmd/Ctrl + P`)
-2. Search for "Update Link References"
-3. Select the type of link you want to update:
-   - Note Link: For regular note links like `[[filename]]`
-   - Heading Link: For heading references like `[[filename#Heading]]`
-   - Block Link: For block references like `[[filename#^blockid]]`
-4. Enter:
-   - Old file name (the current file containing the reference)
-   - New file name (where the content has been moved to)
-   - Heading text (only for heading links)
-   - Block ID (only for block links)
-5. Review the found matches
-6. Click "Confirm Replacement" to update all references
+The plugin provides two commands to help you maintain links in your vault:
+
+### Available Commands
+
+1. **Update link references** (`Cmd/Ctrl + P`)
+   - Opens a dialog to update any type of link:
+     - Note links (`[[filename]]`)
+     - Heading links (`[[filename#Heading]]`)
+     - Block references (`[[filename#^blockid]]`)
+   - You'll need to provide:
+     - Old file name (for note/heading links)
+     - New file name
+     - Heading or block reference (if applicable)
+2. **Update block references from selection**
+   - Select text containing a block reference in your note
+   - Run the command through Command Palette
+   - The plugin will update all references to that block
+
+### Workflow Example
+
+1. **Find References**:
+   - Open Command Palette (`Cmd/Ctrl + P`)
+   - Choose the appropriate command:
+     - "Update link references" for any type of link
+     - "Update block references from selection" for block references
+   - Enter the required information in the dialog
+2. **Review Changes**:
+   - The plugin shows you all found references
+   - Each reference shows:
+     - File location
+     - Current content
+     - Preview of the change
+3. **Confirm Updates**:
+   - Review the proposed changes
+   - Click "Confirm" to apply the updates
+   - All changes will be logged if logging is enabled
 
 ### Examples
 
@@ -63,23 +92,19 @@ After:  [[newNote#^abc123]]
 
 ## Settings
 
-The plugin offers several configurable settings:
+The plugin provides several settings to customize its behavior:
 
-- **Replace Existing Block Links**: Toggle whether to replace block links that already exist in the target file
-- **Enable Change Logging**: Track all link updates in a log file
-- **Log File Path**: Specify the location of the change log file (default: 'link-maintainer-changes.md')
-- **Show Confirmation Dialog**: Enable/disable confirmation dialog before applying changes
-
-## Change Logging
-
-When enabled, the plugin maintains a detailed log of all link updates, including:
-- Timestamp of changes
-- Original and new file names
-- Line numbers and content changes
-- Block IDs (for block references)
-- Batch operation details
-
-The log file helps you track and review all link modifications made through the plugin.
+- **Replace Existing Block Links**: Choose whether to replace block links that already exist in the target file
+- **Show Confirmation Dialog**: Enable/disable confirmation before applying changes
+- **Change Logging**:
+  - Enable/disable logging of link updates
+  - Set log file path (default: 'link-maintainer-changes.md')
+  - Log entries include:
+    - Timestamp of changes
+    - Original and new file paths
+    - Line numbers and content changes
+    - Block IDs for block references
+    - Batch operation details
 
 ## Installation
 
