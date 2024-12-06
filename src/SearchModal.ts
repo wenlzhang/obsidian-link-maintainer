@@ -4,10 +4,12 @@ import { LinkType } from "./main";
 export class SearchModal extends Modal {
     oldFileName: string;
     newFileName: string;
+    blockId: string;
+    headingText: string;
     linkType: LinkType;
-    onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void;
+    onSubmit: (oldFileName: string, newFileName: string, reference: string | undefined, linkType: LinkType) => void;
 
-    constructor(app: App, onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void) {
+    constructor(app: App, onSubmit: (oldFileName: string, newFileName: string, reference: string | undefined, linkType: LinkType) => void) {
         super(app);
         this.onSubmit = onSubmit;
         this.linkType = LinkType.NOTE; // Default link type
@@ -80,7 +82,7 @@ export class SearchModal extends Modal {
                 return;
             }
 
-            let reference: string | null = null;
+            let reference: string | undefined = undefined;
             switch (this.linkType) {
                 case LinkType.BLOCK:
                     if (!this.blockId) {

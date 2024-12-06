@@ -1,11 +1,11 @@
-import { TFile, Modal, Notice, PluginSettingTab } from "obsidian";
+import { TFile, Modal, Notice, PluginSettingTab, Setting, Plugin, Editor } from "obsidian";
 import { LinkMaintainerSettingTab } from "./LinkMaintainerSettingTab";
 import { LinkMaintainerSettings, BatchChangeLog, LinkChangeLog, LinkMatch, extractBlockInfo, DEFAULT_SETTINGS, LinkType } from "./main";
 import { ResultsModal } from "./ResultsModal";
 import { SearchModal } from "./SearchModal";
 
 
-export default class LinkMaintainer extends PluginSettingTab {
+export default class LinkMaintainer extends Plugin {
     settings: LinkMaintainerSettings;
     private currentBatchLog: BatchChangeLog | null = null;
 
@@ -170,7 +170,7 @@ export default class LinkMaintainer extends PluginSettingTab {
         this.addCommand({
             id: 'update-block-references',
             name: 'Update block references from selection',
-            editorCallback: (editor) => {
+            editorCallback: (editor: Editor) => {
                 const selection = editor.getSelection();
                 if (!selection) {
                     new Notice('Please select some text first');
@@ -205,13 +205,13 @@ export default class LinkMaintainer extends PluginSettingTab {
     showSearchModal() {
         new SearchModal(
             this.app,
-            (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => {
+            (oldFileName: string, newFileName: string, reference: string | undefined, linkType: LinkType) => {
                 this.searchLinks(oldFileName, newFileName, reference, linkType);
             }
         ).open();
     }
 
-    async searchLinks(oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) {
+    async searchLinks(oldFileName: string, newFileName: string, reference: string | undefined, linkType: LinkType) {
         const matches: LinkMatch[] = [];
         const files = this.app.vault.getMarkdownFiles();
 
@@ -301,7 +301,7 @@ export default class LinkMaintainer extends PluginSettingTab {
                 if (match) {
                     // Extract filename (if it's a complete link)
                     const linkMatch = line.match(/\[\[([^\]#|]+)/);
-                    const oldFileName = linkMatch ? linkMatch[1].trim() : null;
+                    const oldFileName = linkMatch ? linkMatch[1].trim() : undefined;
 
                     if (oldFileName) {
                         // Check if the block exists in the linked file
@@ -330,7 +330,7 @@ export default class LinkMaintainer extends PluginSettingTab {
         return matches;
     }
 
-    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | undefined, linkType: LinkType) {
         // Initialize batch log
         if (reference) {
             this.initBatchLog(reference, newFileName);

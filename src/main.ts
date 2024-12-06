@@ -1,5 +1,11 @@
 import { Plugin, DropdownComponent } from 'obsidian';
 
+declare global {
+    interface Window {
+        app: any;
+    }
+}
+
 export interface LinkMatch {
     file: string;
     lineContent: string;
@@ -33,7 +39,7 @@ export interface LinkChangeLog {
     originalContent: string;
     newContent: string;
     blockId: string;
-    oldFileName: string | null;
+    oldFileName?: string;
     newFileName: string;
 }
 
@@ -69,7 +75,7 @@ export function extractBlockInfo(text: string): ExtractedInfo | null {
     match = text.match(blockIdRegex);
     if (match) {
         // If only block ID is present, get filename from active file
-        const activeFile = app.workspace.getActiveFile();
+        const activeFile = window.app.workspace.getActiveFile();
         if (activeFile) {
             return {
                 fileName: activeFile.basename,
@@ -80,5 +86,3 @@ export function extractBlockInfo(text: string): ExtractedInfo | null {
     
     return null;
 }
-
-

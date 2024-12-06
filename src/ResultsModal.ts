@@ -2,19 +2,19 @@ import { Modal, App, TFile } from "obsidian";
 import { LinkMatch, LinkType } from "./main";
 
 export class ResultsModal extends Modal {
-    matches: LinkMatch[];
-    newFileName: string;
-    reference: string | null;
-    linkType: LinkType;
-    onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) => void;
+    private matches: LinkMatch[];
+    private newFileName: string;
+    private reference: string | undefined;
+    private linkType: LinkType;
+    private onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | undefined, linkType: LinkType) => void;
 
     constructor(
         app: App,
         matches: LinkMatch[],
         newFileName: string,
-        reference: string | null,
+        reference: string | undefined,
         linkType: LinkType,
-        onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) => void
+        onConfirm: (matches: LinkMatch[], newFileName: string, reference: string | undefined, linkType: LinkType) => void
     ) {
         super(app);
         this.matches = matches;
@@ -84,10 +84,10 @@ export class ResultsModal extends Modal {
                     const leaf = this.app.workspace.getLeaf();
                     await leaf.openFile(file);
                     const view = leaf.view;
-                    if (view.editor) {
+                    if ('editor' in view) {
                         const pos = { line: match.lineNumber, ch: 0 };
-                        view.editor.setCursor(pos);
-                        view.editor.scrollIntoView({ from: pos, to: pos }, true);
+                        (view as any).editor.setCursor(pos);
+                        (view as any).editor.scrollIntoView({ from: pos, to: pos }, true);
                     }
                 });
             }
