@@ -213,18 +213,20 @@ export default class LinkMaintainer extends Plugin {
 
     async searchLinks(oldFileName: string, newFileName: string, reference: string | undefined, linkType: LinkType) {
         const matches: LinkMatch[] = [];
-        const files = this.app.vault.getMarkdownFiles();
+        const markdownFiles = this.app.vault.getMarkdownFiles();
+        const canvasFiles = this.app.vault.getFiles().filter(file => file.extension === 'canvas');
+        const allFiles = [...markdownFiles, ...canvasFiles];
 
-        const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const escapedReference = reference ? reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+        const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+        const escapedReference = reference ? reference.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&') : '';
 
         let pattern: string;
         switch (linkType) {
             case LinkType.BLOCK:
-                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#\\^${escapedReference}(\\|[^\\]]+)?\\]\\]`;
+                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#\\^${escapedReference}(?:\\|[^\\]]+)?\\]\\]|\\^${escapedReference}(?=[\\s\\]\\n]|$)`;
                 break;
             case LinkType.HEADING:
-                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#${escapedReference}(\\|[^\\]]+)?\\]\\]`;
+                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#${escapedReference}(?:\\|[^\\]]+)?\\]\\]`;
                 break;
             default:
                 pattern = `(!?\\[\\[)${escapedOldFileName}(\\|[^\\]]+)?\\]\\]`;
@@ -232,21 +234,64 @@ export default class LinkMaintainer extends Plugin {
 
         const regex = new RegExp(pattern, 'g');
 
-        for (const file of files) {
+        for (const file of allFiles) {
             const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
+            
+            if (file.extension === 'canvas') {
+                try {
+                    // Parse canvas file JSON
+                    const canvasData = JSON.parse(content);
+                    
+                    // Search through nodes for text content
+                    const processNode = (node: any, parentPath = '') => {
+                        if (node.text) {
+                            const lines = node.text.split('\n');
+                            lines.forEach((line: string, index: number) => {
+                                let match;
+                                while ((match = regex.exec(line)) !== null) {
+                                    matches.push({
+                                        file: file.path,
+                                        lineContent: line,
+                                        lineNumber: index,
+                                        linkText: match[0],
+                                        isCanvas: true,
+                                        canvasNodeId: node.id,
+                                        canvasPath: parentPath
+                                    });
+                                }
+                            });
+                        }
+                        
+                        // Recursively process child nodes if they exist
+                        if (node.children) {
+                            node.children.forEach((child: any) => 
+                                processNode(child, `${parentPath}/${node.id || ''}`)
+                            );
+                        }
+                    };
 
-            lines.forEach((line, index) => {
-                let match;
-                while ((match = regex.exec(line)) !== null) {
-                    matches.push({
-                        file: file.path,
-                        lineContent: line,
-                        lineNumber: index,
-                        linkText: match[0],
-                    });
+                    // Process all nodes in the canvas
+                    if (canvasData.nodes) {
+                        canvasData.nodes.forEach((node: any) => processNode(node));
+                    }
+                } catch (error) {
+                    console.error(`Error processing canvas file ${file.path}:`, error);
                 }
-            });
+            } else {
+                // Process markdown files as before
+                const lines = content.split('\n');
+                lines.forEach((line, index) => {
+                    let match;
+                    while ((match = regex.exec(line)) !== null) {
+                        matches.push({
+                            file: file.path,
+                            lineContent: line,
+                            lineNumber: index,
+                            linkText: match[0],
+                        });
+                    }
+                });
+            }
         }
 
         new ResultsModal(
@@ -345,44 +390,131 @@ export default class LinkMaintainer extends Plugin {
             }
         }
 
-        // Iterate over each match
-        for (const match of matches) {
-            const file = this.app.vault.getAbstractFileByPath(match.file);
+        // Group matches by file to avoid multiple reads/writes to the same file
+        const matchesByFile = matches.reduce((acc, match) => {
+            if (!acc[match.file]) {
+                acc[match.file] = [];
+            }
+            acc[match.file].push(match);
+            return acc;
+        }, {} as Record<string, LinkMatch[]>);
+
+        // Iterate over each file
+        for (const [filePath, fileMatches] of Object.entries(matchesByFile)) {
+            const file = this.app.vault.getAbstractFileByPath(filePath);
             if (!(file instanceof TFile)) {
                 continue;
             }
 
             const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
-            const line = lines[match.lineNumber];
 
-            let newLine: string;
-            if (match.oldFileName) {
-                // If old file name is present, replace complete link
-                const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
-                newLine = line.replace(oldLinkPattern, `[[${newFileName}#^${reference}]]`);
+            if (file.extension === 'canvas') {
+                try {
+                    const canvasData = JSON.parse(content);
+                    
+                    // Function to process and update nodes recursively
+                    const processNode = (node: any): boolean => {
+                        let modified = false;
+                        
+                        // Find matches for this node
+                        const nodeMatches = fileMatches.filter(m => m.canvasNodeId === node.id);
+                        
+                        if (node.text && nodeMatches.length > 0) {
+                            let newText = node.text;
+                            nodeMatches.forEach(match => {
+                                if (match.oldFileName) {
+                                    // If old file name is present, replace complete link
+                                    const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
+                                    newText = newText.replace(oldLinkPattern, `[[${newFileName}#^${reference}]]`);
+                                } else {
+                                    // If only block ID is present, add complete link
+                                    const blockIdPattern = new RegExp(`\\^${reference}(?=[\\s\\]\\n]|$)`);
+                                    newText = newText.replace(blockIdPattern, `[[${newFileName}#^${reference}]]`);
+                                }
+                                
+                                // Log the change
+                                this.logChange({
+                                    timestamp: new Date().toISOString(),
+                                    originalFile: filePath,
+                                    lineNumber: match.lineNumber,
+                                    originalContent: match.lineContent,
+                                    newContent: newText,
+                                    blockId: reference || '',
+                                    oldFileName: match.oldFileName,
+                                    newFileName: newFileName
+                                });
+                            });
+                            
+                            if (newText !== node.text) {
+                                node.text = newText;
+                                modified = true;
+                            }
+                        }
+                        
+                        // Process children recursively
+                        if (node.children) {
+                            const childModified = node.children.some((child: any) => processNode(child));
+                            modified = modified || childModified;
+                        }
+                        
+                        return modified;
+                    };
+
+                    // Process all nodes
+                    let modified = false;
+                    if (canvasData.nodes) {
+                        modified = canvasData.nodes.some((node: any) => processNode(node));
+                    }
+
+                    // Save changes if any modifications were made
+                    if (modified) {
+                        await this.app.vault.modify(file, JSON.stringify(canvasData, null, 2));
+                    }
+                } catch (error) {
+                    console.error(`Error updating canvas file ${filePath}:`, error);
+                }
             } else {
-                // If only block ID is present, add complete link
-                const blockIdPattern = new RegExp(`\\^${reference}(?=[\\s\\]\\n]|$)`);
-                newLine = line.replace(blockIdPattern, `[[${newFileName}#^${reference}]]`);
-            }
+                // Handle markdown files as before
+                const lines = content.split('\n');
+                let modified = false;
 
-            if (newLine !== line) {
-                // Log the change
-                await this.logChange({
-                    timestamp: new Date().toISOString(),
-                    originalFile: match.file,
-                    lineNumber: match.lineNumber,
-                    originalContent: line,
-                    newContent: newLine,
-                    blockId: reference || '',
-                    oldFileName: match.oldFileName,
-                    newFileName: newFileName
+                fileMatches.forEach(match => {
+                    const line = lines[match.lineNumber];
+                    let newLine: string;
+
+                    if (match.oldFileName) {
+                        // If old file name is present, replace complete link
+                        const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
+                        newLine = line.replace(oldLinkPattern, `[[${newFileName}#^${reference}]]`);
+                    } else {
+                        // If only block ID is present, add complete link
+                        const blockIdPattern = new RegExp(`\\^${reference}(?=[\\s\\]\\n]|$)`);
+                        newLine = line.replace(blockIdPattern, `[[${newFileName}#^${reference}]]`);
+                    }
+
+                    if (newLine !== line) {
+                        // Log the change
+                        this.logChange({
+                            timestamp: new Date().toISOString(),
+                            originalFile: filePath,
+                            lineNumber: match.lineNumber,
+                            originalContent: line,
+                            newContent: newLine,
+                            blockId: reference || '',
+                            oldFileName: match.oldFileName,
+                            newFileName: newFileName
+                        });
+
+                        // Update the line
+                        lines[match.lineNumber] = newLine;
+                        modified = true;
+                    }
                 });
 
-                // Update the line
-                lines[match.lineNumber] = newLine;
-                await this.app.vault.modify(file, lines.join('\n'));
+                // Save changes if any modifications were made
+                if (modified) {
+                    await this.app.vault.modify(file, lines.join('\n'));
+                }
             }
         }
 

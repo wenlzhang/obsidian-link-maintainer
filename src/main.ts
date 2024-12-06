@@ -10,6 +10,9 @@ export interface LinkMatch {
     lineNumber: number;
     linkText: string;
     oldFileName?: string;
+    isCanvas?: boolean;
+    canvasNodeId?: string;
+    canvasPath?: string;
 }
 
 interface ExtractedInfo {
