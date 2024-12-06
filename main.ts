@@ -1,4 +1,5 @@
 import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, PluginSettingTab, Setting, Editor, MarkdownView } from 'obsidian';
+import { getCleanBlockRef, extractBlockInfo, ExtractedInfo } from './utils';
 
 interface LinkMatch {
     file: string;
@@ -51,33 +52,6 @@ const DEFAULT_SETTINGS: LinkMaintainerSettings = {
     logFilePath: 'link-maintainer-changes.md',
     showConfirmationDialog: true
 };
-
-function extractBlockInfo(text: string, app: App): ExtractedInfo | null {
-    const blockIdRegex = /\^([a-zA-Z0-9-]+)$/;
-    const fileBlockIdRegex = /([^#\^]+)#\^([a-zA-Z0-9-]+)$/;
-    
-    let match = text.match(fileBlockIdRegex);
-    if (match) {
-        return {
-            fileName: match[1],
-            blockId: match[2]
-        };
-    }
-    
-    match = text.match(blockIdRegex);
-    if (match) {
-        // If only block ID is present, get filename from active file
-        const activeFile = app.workspace.getActiveFile();
-        if (activeFile) {
-            return {
-                fileName: activeFile.basename,
-                blockId: match[1]
-            };
-        }
-    }
-    
-    return null;
-}
 
 class SearchModal extends Modal {
     oldFileName: string;
@@ -467,16 +441,6 @@ export default class LinkMaintainer extends Plugin {
         const getNoteName = (filePath: string): string => {
             // Remove folders and extension, get just the note name
             return filePath.split('/').pop()?.replace(/\.md$/, '') || filePath;
-        };
-
-        // Helper function to get clean block reference
-        const getCleanBlockRef = (content: string): string => {
-            const match = content.match(/\[\[([^\]#|]+)/);
-            if (match) {
-                // If it's a full link, return just the path part
-                return match[1] || content;
-            }
-            return content;
         };
 
         // Get the first change to use as an example of the link update
