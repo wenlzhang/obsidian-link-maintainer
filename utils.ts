@@ -2,12 +2,12 @@
 import { App } from 'obsidian';
 
 export const REGEX = {
-    // Match complete block reference links [[filename#^blockid]]
-    BLOCK_LINK: /\[\[([^\]]+)#\^([^\]\|]+)\]\]/,
     // Match standalone block ID ^blockid
-    BLOCK_ID: /\^([^\s\]]+)/,
-    // Match full link with optional alias
-    FULL_LINK_WITH_ALIAS: /\[\[([^\]]+?)(?:\|[^\]]+)?\]\]|(\^[a-zA-Z0-9]+)/
+    BLOCK_ID: /\^([a-zA-Z0-9-]+)$/,
+    // Match file with block ID filename#^blockid
+    FILE_BLOCK_ID: /([^#\^]+)#\^([a-zA-Z0-9-]+)$/,
+    // Match link content inside [[ up to # or |
+    LINK_CONTENT: /\[\[([^\]#|]+)/
 };
 
 /**
@@ -16,10 +16,9 @@ export const REGEX = {
  * @returns The cleaned reference
  */
 export function getCleanBlockRef(content: string): string {
-    const match = content.match(REGEX.FULL_LINK_WITH_ALIAS);
+    const match = content.match(REGEX.LINK_CONTENT);
     if (match) {
-        // If it's a full link, return just the path part
-        return match[1] || match[2] || content;
+        return match[1];
     }
     return content;
 }
@@ -36,8 +35,8 @@ export interface ExtractedInfo {
 }
 
 export function extractBlockInfo(text: string, app: App): ExtractedInfo | null {
-    // First try to match complete block reference
-    let match = text.match(REGEX.BLOCK_LINK);
+    // First try to match file with block ID pattern
+    let match = text.match(REGEX.FILE_BLOCK_ID);
     if (match) {
         return {
             fileName: match[1],
