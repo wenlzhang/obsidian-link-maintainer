@@ -1,6 +1,7 @@
 import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, Editor, MarkdownView } from 'obsidian';
 import { getCleanBlockRef, extractBlockInfo } from './utils';
 import { LinkMaintainerSettingTab } from 'LinkMaintainerSettingTab.1';
+import { DEFAULT_SETTINGS } from 'DEFAULT_SETTINGS';
 
 interface LinkMatch {
     file: string;
@@ -21,7 +22,7 @@ enum LinkType {
     HEADING = 'heading'
 }
 
-interface LinkMaintainerSettings {
+export interface LinkMaintainerSettings {
     replaceExistingBlockLinks: boolean;
     enableChangeLogging: boolean;
     logFilePath: string;
@@ -46,13 +47,6 @@ interface BatchChangeLog {
     description: string;
     changes: LinkChangeLog[];
 }
-
-const DEFAULT_SETTINGS: LinkMaintainerSettings = {
-    replaceExistingBlockLinks: false,
-    enableChangeLogging: true,
-    logFilePath: 'link-maintainer-changes.md',
-    showConfirmationDialog: true
-};
 
 class SearchModal extends Modal {
     oldFileName: string;
