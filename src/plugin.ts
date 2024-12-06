@@ -1,8 +1,8 @@
 import { TFile, Modal, Notice, Plugin, Editor } from "obsidian";
-import { LinkMaintainerSettingTab } from "./LinkMaintainerSettingTab";
+import { LinkMaintainerSettingTab } from "./settingsTab";
 import { LinkMaintainerSettings, BatchChangeLog, LinkChangeLog, LinkMatch, extractBlockInfo, DEFAULT_SETTINGS, LinkType } from "./main";
-import { ResultsModal } from "./ResultsModal";
-import { SearchModal } from "./SearchModal";
+import { ResultsModal } from "./resultsModal";
+import { SearchModal } from "./searchModal";
 
 
 export default class LinkMaintainer extends Plugin {
