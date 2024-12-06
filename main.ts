@@ -1,5 +1,5 @@
 import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, PluginSettingTab, Setting, Editor, MarkdownView } from 'obsidian';
-import { getCleanBlockRef, extractBlockInfo, ExtractedInfo } from './utils';
+import { getCleanBlockRef, extractBlockInfo } from './utils';
 
 interface LinkMatch {
     file: string;
