@@ -1,11 +1,11 @@
-import { TFile, Modal, Notice } from "obsidian";
+import { TFile, Modal, Notice, PluginSettingTab } from "obsidian";
 import { LinkMaintainerSettingTab } from "./LinkMaintainerSettingTab";
 import { LinkMaintainerSettings, BatchChangeLog, LinkChangeLog, LinkMatch, extractBlockInfo, DEFAULT_SETTINGS, LinkType } from "./main";
 import { ResultsModal } from "./ResultsModal";
 import { SearchModal } from "./SearchModal";
 
 
-export default class LinkMaintainer extends Plugin {
+export default class LinkMaintainer extends PluginSettingTab {
     settings: LinkMaintainerSettings;
     private currentBatchLog: BatchChangeLog | null = null;
 
