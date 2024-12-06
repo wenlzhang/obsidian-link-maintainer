@@ -54,3 +54,58 @@
 .link-maintainer-modal button:hover {
     background-color: var(--interactive-accent-hover);
 }
+
+.link-maintainer-info {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: var(--background-secondary);
+    border-radius: 5px;
+}
+
+.link-maintainer-info-item {
+    margin: 5px 0;
+    font-family: var(--font-monospace);
+}
+
+.link-maintainer-match-list {
+    margin-top: 10px;
+}
+
+.link-maintainer-match-item {
+    margin: 20px 0;
+}
+
+.link-maintainer-file-info {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.link-maintainer-file-link {
+    color: var(--text-accent);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.link-maintainer-file-link:hover {
+    text-decoration: underline;
+}
+
+.link-maintainer-line-number {
+    margin: 5px 0;
+    color: var(--text-muted);
+}
+
+.link-maintainer-line-content {
+    font-family: var(--font-monospace);
+    padding: 5px;
+    background-color: var(--background-secondary);
+    border-radius: 3px;
+    white-space: pre-wrap;
+}
+
+.link-maintainer-button-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}

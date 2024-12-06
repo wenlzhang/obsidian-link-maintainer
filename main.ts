@@ -210,18 +210,18 @@ class ResultsModal extends Modal {
         this.onConfirm = onConfirm;
     }
 
-    onOpen() {
+    onOpen(): void {
         const { contentEl } = this;
         contentEl.empty();
+
+        // Add modal class
         contentEl.addClass('link-maintainer-modal');
 
-        contentEl.createEl('h2', { text: 'Link Maintainer: Update block references' });
-
-        // Display basic information
-        const infoContainer = contentEl.createEl('div', { cls: 'link-maintainer-info' });
+        // Create info section
+        const infoSection = contentEl.createDiv({ cls: 'link-maintainer-info' });
         
         // Block ID
-        infoContainer.createEl('div', {
+        infoSection.createEl('div', {
             cls: 'link-maintainer-info-item',
             text: `Block ID: ^${this.reference}`
         });
@@ -229,14 +229,14 @@ class ResultsModal extends Modal {
         // Get the old file name from the first match
         const oldFileName = this.matches[0]?.oldFileName || '';
         if (oldFileName) {
-            infoContainer.createEl('div', {
+            infoSection.createEl('div', {
                 cls: 'link-maintainer-info-item',
                 text: `Old file name: ${oldFileName}`
             });
         }
         
         // New file name
-        infoContainer.createEl('div', {
+        infoSection.createEl('div', {
             cls: 'link-maintainer-info-item',
             text: `New file name: ${this.newFileName}`
         });
@@ -290,60 +290,6 @@ class ResultsModal extends Modal {
                 text: match.lineContent
             });
         });
-
-        // Add styles
-        const style = document.createElement('style');
-        style.textContent = `
-            .link-maintainer-modal {
-                padding: 20px;
-            }
-            .link-maintainer-info {
-                margin-bottom: 20px;
-                padding: 10px;
-                background-color: var(--background-secondary);
-                border-radius: 5px;
-            }
-            .link-maintainer-info-item {
-                margin: 5px 0;
-                font-family: var(--font-monospace);
-            }
-            .link-maintainer-match-list {
-                margin-top: 10px;
-            }
-            .link-maintainer-match-item {
-                margin: 20px 0;
-            }
-            .link-maintainer-file-info {
-                font-weight: bold;
-                margin-bottom: 5px;
-            }
-            .link-maintainer-file-link {
-                color: var(--text-accent);
-                text-decoration: none;
-                cursor: pointer;
-            }
-            .link-maintainer-file-link:hover {
-                text-decoration: underline;
-            }
-            .link-maintainer-line-number {
-                margin: 5px 0;
-                color: var(--text-muted);
-            }
-            .link-maintainer-line-content {
-                font-family: var(--font-monospace);
-                padding: 5px;
-                background-color: var(--background-secondary);
-                border-radius: 3px;
-                white-space: pre-wrap;
-            }
-            .link-maintainer-button-container {
-                margin-top: 20px;
-                display: flex;
-                justify-content: flex-end;
-                gap: 10px;
-            }
-        `;
-        document.head.appendChild(style);
 
         const buttonContainer = contentEl.createEl('div', { cls: 'link-maintainer-button-container' });
 
@@ -525,10 +471,10 @@ export default class LinkMaintainer extends Plugin {
 
         // Helper function to get clean block reference
         const getCleanBlockRef = (content: string): string => {
-            const match = content.match(/\[\[([^\]]+?)(?:\|[^\]]+)?\]\]|(\^[a-zA-Z0-9]+)/);
+            const match = content.match(/\[\[([^\]#|]+)/);
             if (match) {
                 // If it's a full link, return just the path part
-                return match[1] || match[2] || content;
+                return match[1] || content;
             }
             return content;
         };
