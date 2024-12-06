@@ -1,11 +1,11 @@
-import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, PluginSettingTab, Setting } from 'obsidian';
+import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, PluginSettingTab, Setting, Editor, MarkdownView } from 'obsidian';
 
 interface LinkMatch {
     file: string;
     lineContent: string;
     lineNumber: number;
     linkText: string;
-    oldFileName?: string;
+    oldFileName: string | null;
 }
 
 interface ExtractedInfo {
@@ -52,13 +52,11 @@ const DEFAULT_SETTINGS: LinkMaintainerSettings = {
     showConfirmationDialog: true
 };
 
-function extractBlockInfo(text: string): ExtractedInfo | null {
-    // Match complete block reference links [[filename#^blockid]]
-    const blockLinkRegex = /\[\[([^\]]+)#\^([^\]\|]+)\]\]/;
-    // Match standalone block ID ^blockid
-    const blockIdRegex = /\^([^\s\]]+)/;
+function extractBlockInfo(text: string, app: App): ExtractedInfo | null {
+    const blockIdRegex = /\^([a-zA-Z0-9-]+)$/;
+    const fileBlockIdRegex = /([^#\^]+)#\^([a-zA-Z0-9-]+)$/;
     
-    let match = text.match(blockLinkRegex);
+    let match = text.match(fileBlockIdRegex);
     if (match) {
         return {
             fileName: match[1],
@@ -84,6 +82,8 @@ function extractBlockInfo(text: string): ExtractedInfo | null {
 class SearchModal extends Modal {
     oldFileName: string;
     newFileName: string;
+    blockId: string | null = null;
+    headingText: string | null = null;
     linkType: LinkType;
     onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void;
 
@@ -205,7 +205,7 @@ class ResultsModal extends Modal {
         super(app);
         this.matches = matches;
         this.newFileName = newFileName;
-        this.reference = reference;
+        this.reference = reference ?? null;
         this.linkType = linkType;
         this.onConfirm = onConfirm;
     }
@@ -269,7 +269,7 @@ class ResultsModal extends Modal {
                     // Open file and jump to specified line
                     const leaf = this.app.workspace.getLeaf();
                     await leaf.openFile(file);
-                    const view = leaf.view;
+                    const view = leaf.view as MarkdownView;
                     if (view.editor) {
                         const pos = { line: match.lineNumber, ch: 0 };
                         view.editor.setCursor(pos);
@@ -662,7 +662,7 @@ export default class LinkMaintainer extends Plugin {
                     return;
                 }
 
-                const info = extractBlockInfo(selection);
+                const info = extractBlockInfo(selection, this.app);
                 if (!info) {
                     new Notice('No valid block ID found in selection');
                     return;
@@ -729,6 +729,7 @@ export default class LinkMaintainer extends Plugin {
                         lineContent: line,
                         lineNumber: index,
                         linkText: match[0],
+                        oldFileName: null
                     });
                 }
             });
