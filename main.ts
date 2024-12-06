@@ -4,6 +4,8 @@ import { LinkMaintainerSettingTab } from 'LinkMaintainerSettingTab';
 import { DEFAULT_SETTINGS } from 'DEFAULT_SETTINGS';
 import { SearchModal } from './SearchModal';
 import { ResultsModal } from './ResultsModal';
+import { SearchLinks } from './searchLinks';
+import { BlockReferenceManager } from './BlockReferenceManager';
 
 export interface LinkMatch {
     file: string;
@@ -53,6 +55,13 @@ interface BatchChangeLog {
 export default class LinkMaintainer extends Plugin {
     settings: LinkMaintainerSettings;
     private currentBatchLog: BatchChangeLog | null = null;
+    private searchLinksHelper: SearchLinks;
+    private blockReferenceManager: BlockReferenceManager;
+
+    constructor(app: App, manifest: any) {
+        super(app, manifest);
+        this.searchLinksHelper = new SearchLinks(app, this.replaceLinks.bind(this));
+    }
 
     async logChange(change: LinkChangeLog): Promise<void> {
         if (!this.settings.enableChangeLogging) return;
@@ -194,6 +203,13 @@ export default class LinkMaintainer extends Plugin {
 
     async onload() {
         await this.loadSettings();
+        
+        // Initialize BlockReferenceManager after settings are loaded
+        this.blockReferenceManager = new BlockReferenceManager(
+            this.app,
+            this.replaceLinks.bind(this),
+            this.settings.replaceExistingBlockLinks
+        );
 
         this.addSettingTab(new LinkMaintainerSettingTab(this.app, this));
 
@@ -248,123 +264,11 @@ export default class LinkMaintainer extends Plugin {
     }
 
     async searchLinks(oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) {
-        const matches: LinkMatch[] = [];
-        const files = this.app.vault.getMarkdownFiles();
-
-        const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const escapedReference = reference ? reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
-
-        let pattern: string;
-        switch (linkType) {
-            case LinkType.BLOCK:
-                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#\\^${escapedReference}(\\|[^\\]]+)?\\]\\]`;
-                break;
-            case LinkType.HEADING:
-                pattern = `(!?\\[\\[)${escapedOldFileName}\\s*#${escapedReference}(\\|[^\\]]+)?\\]\\]`;
-                break;
-            default:
-                pattern = `(!?\\[\\[)${escapedOldFileName}(\\|[^\\]]+)?\\]\\]`;
-        }
-
-        const regex = new RegExp(pattern, 'g');
-
-        for (const file of files) {
-            const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
-
-            lines.forEach((line, index) => {
-                let match;
-                while ((match = regex.exec(line)) !== null) {
-                    matches.push({
-                        file: file.path,
-                        lineContent: line,
-                        lineNumber: index,
-                        linkText: match[0],
-                        oldFileName: null
-                    });
-                }
-            });
-        }
-
-        new ResultsModal(
-            this.app, 
-            matches, 
-            newFileName,
-            reference,
-            linkType,
-            (matches, newFileName, reference, linkType) => {
-                this.replaceLinks(matches, newFileName, reference, linkType);
-            }
-        ).open();
+        return this.searchLinksHelper.searchLinks(oldFileName, newFileName, reference, linkType);
     }
 
     async searchAndUpdateBlockReferences(blockId: string, newFileName: string) {
-        const matches = await this.searchBlockReferences(blockId, newFileName);
-        if (matches.length === 0) {
-            new Notice('No references found');
-            return;
-        }
-
-        new ResultsModal(
-            this.app,
-            matches,
-            newFileName,
-            blockId,
-            LinkType.BLOCK,
-            this.replaceLinks.bind(this)
-        ).open();
-    }
-
-    async searchBlockReferences(blockId: string, excludeFileName: string): Promise<LinkMatch[]> {
-        const matches: LinkMatch[] = [];
-        const files = this.app.vault.getMarkdownFiles();
-        
-        // Create regex pattern to match block ID references
-        const blockIdPattern = new RegExp(`\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]|\\^${blockId}(?=[\\s\\]\\n]|$)`);
-        
-        for (const file of files) {
-            // Exclude the new file (we don't need to update references in it)
-            if (file.basename === excludeFileName) {
-                continue;
-            }
-
-            const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
-            
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                // Use regex to match complete block ID
-                const match = line.match(blockIdPattern);
-                if (match) {
-                    // Extract filename (if it's a complete link)
-                    const linkMatch = line.match(/\[\[([^\]#|]+)/);
-                    const oldFileName = linkMatch ? linkMatch[1].trim() : null;
-
-                    if (oldFileName) {
-                        // Check if the block exists in the linked file
-                        const linkedFile = this.app.vault.getAbstractFileByPath(`${oldFileName}.md`);
-                        if (linkedFile instanceof TFile) {
-                            const linkedContent = await this.app.vault.read(linkedFile);
-                            
-                            // If setting is false and the block exists in the linked file, skip it
-                            if (!this.settings.replaceExistingBlockLinks && linkedContent.includes(`^${blockId}`)) {
-                                continue;
-                            }
-                        }
-                    }
-                    
-                    matches.push({
-                        file: file.path,
-                        lineContent: line,
-                        lineNumber: i,
-                        linkText: line,
-                        oldFileName: oldFileName
-                    });
-                }
-            }
-        }
-        
-        return matches;
+        return this.blockReferenceManager.searchAndUpdateBlockReferences(blockId, newFileName);
     }
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
