@@ -1,5 +1,3 @@
-import { Plugin, DropdownComponent } from 'obsidian';
-
 declare global {
     interface Window {
         app: any;

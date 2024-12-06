@@ -1,4 +1,4 @@
-import { TFile, Modal, Notice, PluginSettingTab, Setting, Plugin, Editor } from "obsidian";
+import { TFile, Modal, Notice, Plugin, Editor } from "obsidian";
 import { LinkMaintainerSettingTab } from "./LinkMaintainerSettingTab";
 import { LinkMaintainerSettings, BatchChangeLog, LinkChangeLog, LinkMatch, extractBlockInfo, DEFAULT_SETTINGS, LinkType } from "./main";
 import { ResultsModal } from "./ResultsModal";
