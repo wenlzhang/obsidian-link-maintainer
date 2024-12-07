@@ -65,6 +65,23 @@ This is why I need an efficient way to update these outdated block links. I am d
 
 This is how this tool was born, and I hope you enjoy using it!
 
+## ⚠️ Important Warning
+
+**Please read before using**: While Link Maintainer implements several safety measures to ensure robust handling of block references and note links, the operations are **not reversible**. Before performing any link updates:
+
+1. **Always Review the Confirmation Window**: Carefully check all proposed changes in the confirmation dialog before proceeding.
+2. **Exercise Caution**: Take extra care when performing bulk operations that affect multiple files.
+3. **Back Up Your Vault**: Since link updates cannot be undone, make sure you have a backup of your vault.
+
+The plugin follows these principles to maximize safety:
+
+- Shows a detailed preview of all changes before applying them
+- Tracks and logs all updated links for reference
+- Provides clear warnings for potentially risky operations
+- Implements thorough validation before any changes
+
+However, just like renaming tags in Obsidian (e.g., with Tag Wrangler), once links are updated, there is no automatic way to revert the changes. Always proceed with caution and ensure you understand the scope of the changes before confirming them.
+
 ## Documentation
 
 📚 **[View Full Documentation](https://exp.ptkm.net/obsidian-link-maintainer)**
