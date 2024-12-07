@@ -1,6 +1,6 @@
 import { App, Plugin, Notice, TFile } from 'obsidian';
 import { getCleanBlockRef, extractBlockInfo } from './utils';
-import { LinkMaintainerSettingTab } from 'LinkMaintainerSettingTab';
+import { LinkMaintainerSettingTab } from 'src/LinkMaintainerSettingTab';
 import { DEFAULT_SETTINGS } from 'DEFAULT_SETTINGS';
 import { SearchModal } from './SearchModal';
 import { SearchLinks } from './searchLinks';
