@@ -81,6 +81,36 @@ No more manual searching and replacing. No more broken references. Just smooth, 
   - Detailed logging of all link updates
   - Maintain history of all modifications
 
+## Support & Community
+
+This plugin is a labor of love, developed and maintained during my free time after work and on weekends. A lot of thought, energy, and care goes into making it reliable, user-friendly, and aligned with PTKM principles.
+
+If you find this plugin valuable in your daily workflow:
+
+- If it helps you manage tasks more effectively
+- If it saves you time and mental energy
+- If it makes your work between Obsidian and Todoist smoother
+
+Please consider supporting my work. Your support would mean the world to me and would help me dedicate more time and energy to:
+
+- Developing new features
+- Maintaining code quality
+- Providing support and documentation
+- Making the plugin even better for everyone
+
+### Ways to Support
+
+You can support this project in several ways:
+
+- ⭐ Star the project on GitHub
+- 💝 <a href='https://ko-fi.com/C0C66C1TB' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee' /></a>
+- [Sponsor](https://github.com/sponsors/wenlzhang) my work on GitHub
+- 💌 Share your success stories and feedback
+- 📢 Spread the word about the plugin
+- 🐛 [Report issues](https://github.com/wenlzhang/obsidian-link-maintainer/issues) to help improve the plugin
+
+Thank you for being part of this journey! 🙏
+
 ## How to Use
 
 The plugin provides a command to help you maintain block references in your vault:
@@ -189,7 +219,3 @@ The plugin provides several settings to customize its behavior:
 3. Click Browse and search for "Link Maintainer"
 4. Install the plugin
 5. Enable the plugin in your Community Plugins list
-
-## Support me
-
-<a href='https://ko-fi.com/C0C66C1TB' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
