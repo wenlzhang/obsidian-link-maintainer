@@ -1,12 +1,12 @@
 import { TFile } from 'obsidian';
-import { LinkMatch, LinkType, LinkChangeLog } from './main';
+import { LinkMatch, LinkType, BatchChangeLog } from './main';
 
 export interface LinkReplacerDependencies {
     plugin: any;
     settings: { showConfirmationDialog: boolean };
     initBatchLog: (blockId: string, newFileName: string) => void;
     showConfirmationDialog: (matches: LinkMatch[], newFileName: string) => Promise<boolean>;
-    logChange: (change: LinkChangeLog) => Promise<void>;
+    logChange: (change: BatchChangeLog) => Promise<void>;
     writeBatchToLog: () => Promise<void>;
     clearBatchLog: () => void;
 }

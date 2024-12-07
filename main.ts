@@ -7,6 +7,7 @@ import { SearchLinks } from './searchLinks';
 import { BlockReferenceManager } from './BlockReferenceManager';
 import { LinkReplacer } from './LinkReplacer';
 import { showConfirmationDialog } from './ConfirmationDialog';
+import { writeBatchToLog } from './BatchLogger';
 
 export interface LinkMatch {
     file: string;
@@ -34,23 +35,19 @@ export interface LinkMaintainerSettings {
     showConfirmationDialog: boolean;
 }
 
-export class LinkChangeLog {
-    timestamp: string;
-    originalFile: string;
-    lineNumber: number;
+export interface ChangeEntry {
     originalContent: string;
     newContent: string;
-    blockId: string;
-    oldFileName: string | null;
-    newFileName: string;
+    lineNumber: number;
+    originalFile: string;
 }
 
-interface BatchChangeLog {
+export class BatchChangeLog {
     timestamp: string;
     blockId: string;
     newFileName: string;
     description: string;
-    changes: LinkChangeLog[];
+    changes: ChangeEntry[];
 }
 
 export default class LinkMaintainer extends Plugin {
@@ -64,7 +61,7 @@ export default class LinkMaintainer extends Plugin {
         super(app, manifest);
     }
 
-    async logChange(change: LinkChangeLog): Promise<void> {
+    async logChange(change: ChangeEntry): Promise<void> {
         if (!this.settings.enableChangeLogging) return;
         
         if (this.currentBatchLog) {
@@ -83,53 +80,7 @@ export default class LinkMaintainer extends Plugin {
     }
 
     private async writeBatchToLog(): Promise<void> {
-        if (!this.settings.enableChangeLogging || !this.currentBatchLog) return;
-
-        const logFile = this.app.vault.getAbstractFileByPath(this.settings.logFilePath);
-        const batch = this.currentBatchLog;
-
-        // Helper function to get clean note name for links
-        const getNoteName = (filePath: string): string => {
-            // Remove folders and extension, get just the note name
-            return filePath.split('/').pop()?.replace(/\.md$/, '') || filePath;
-        };
-
-        // Get the first change to use as an example of the link update
-        const exampleChange = batch.changes[0];
-        const originalLink = exampleChange ? getCleanBlockRef(exampleChange.originalContent.trim()) : '';
-        const updatedLink = exampleChange ? getCleanBlockRef(exampleChange.newContent.trim()) : '';
-
-        const logEntry = [
-            `## Batch Update at ${batch.timestamp}`,
-            '',
-            `> Block reference update: ${batch.blockId} → ${getNoteName(batch.newFileName)}`,
-            '',
-            '### Details',
-            '',
-            `- **Block ID**: \`${batch.blockId}\``,
-            `- Original Link: \`${originalLink}\``,
-            `- Updated Link: \`${updatedLink}\``,
-            `- **Files Affected**: ${batch.changes.length}`,
-            '',
-            '### Changes',
-            '',
-            batch.changes.map(change => 
-                `- [[${getNoteName(change.originalFile)}]] (Line ${change.lineNumber + 1})`
-            ).join('\n'),
-            '',
-            '---\n'
-        ].join('\n');
-
-        if (!(logFile instanceof TFile)) {
-            // Create log file if it doesn't exist
-            await this.app.vault.create(this.settings.logFilePath, logEntry);
-        } else {
-            // Append to existing log file
-            const currentContent = await this.app.vault.read(logFile);
-            await this.app.vault.modify(logFile, logEntry + currentContent);
-        }
-
-        // Clear the current batch
+        await writeBatchToLog(this.app, this.settings, this.currentBatchLog);
         this.currentBatchLog = null;
     }
 
