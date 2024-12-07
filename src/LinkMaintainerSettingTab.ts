@@ -13,8 +13,8 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        // Block Reference Settings Section
-        new Setting(this.containerEl).setName("Block reference").setHeading();
+        // Link Update Behavior Section
+        new Setting(this.containerEl).setName("Link updates").setHeading();
 
         // Replace existing block links setting
         new Setting(containerEl)
@@ -29,13 +29,10 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
                     });
             });
 
-        // Safety Settings Section
-        new Setting(this.containerEl).setName("Safety").setHeading();
-
         // Show confirmation dialog setting
         new Setting(containerEl)
             .setName('Show confirmation dialog')
-            .setDesc('Show a confirmation dialog before updating block references')
+            .setDesc('Show a dialog to review and confirm changes before updating any links')
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.showConfirmationDialog)
@@ -45,10 +42,13 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
                     });
             });
 
+        // Change Tracking Section
+        new Setting(this.containerEl).setName("Change tracking").setHeading();
+
         // Enable change logging setting
         new Setting(containerEl)
             .setName('Enable change logging')
-            .setDesc('Keep a record of all link updates in a log file')
+            .setDesc('Keep a record of all link updates for future reference')
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.enableChangeLogging)
@@ -58,17 +58,19 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
                     });
             });
 
-        // Log file path setting
-        new Setting(containerEl)
-            .setName('Log file path')
-            .setDesc('Path to the log file (relative to vault root)')
-            .addText((text) => {
-                text
-                    .setValue(this.plugin.settings.logFilePath)
-                    .onChange(async (value) => {
-                        this.plugin.settings.logFilePath = value;
-                        await this.plugin.saveSettings();
-                    });
-            });
+        // Log file path setting (only show if logging is enabled)
+        if (this.plugin.settings.enableChangeLogging) {
+            new Setting(containerEl)
+                .setName('Log file path')
+                .setDesc('Path to the log file (relative to vault root)')
+                .addText((text) => {
+                    text
+                        .setValue(this.plugin.settings.logFilePath)
+                        .onChange(async (value) => {
+                            this.plugin.settings.logFilePath = value;
+                            await this.plugin.saveSettings();
+                        });
+                });
+        }
     }
 }
