@@ -1,14 +1,14 @@
 {
-	"id": "obsidian-link-maintainer",
+	"id": "link-maintainer",
 	"name": "Link Maintainer",
 	"version": "0.2.0",
 	"minAppVersion": "1.0.0",
-	"description": "Help maintain and update links in Obsidian notes when files are renamed.",
+	"description": "Maintain note links when splitting or reorganizing notes.",
 	"author": "wenlzhang",
 	"authorUrl": "https://github.com/wenlzhang",
 	"fundingUrl": {
-		"Buy Me a Coffee": "https://ko-fi.com/f84556"
+		"Buy Me a Coffee": "https://ko-fi.com/f84556",
+		"GitHub Sponsor": "https://github.com/sponsors/wenlzhang"
 	},
-	"isDesktopOnly": false,
-	"css": "styles.css"
+	"isDesktopOnly": false
 }
