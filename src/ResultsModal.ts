@@ -36,6 +36,8 @@ export class ResultsModal extends Modal {
 
     onOpen(): void {
         const { contentEl } = this;
+        const self = this;
+
         contentEl.empty();
 
         // Add modal class
@@ -49,11 +51,11 @@ export class ResultsModal extends Modal {
         // Block ID
         infoSection.createEl("div", {
             cls: "link-maintainer-info-item",
-            text: `Block ID: ^${this.reference}`,
+            text: `Block ID: ^${self.reference}`,
         });
 
         // Get the old file name from the first match
-        const oldFileName = this.matches[0]?.oldFileName || "";
+        const oldFileName = self.matches[0]?.oldFileName || "";
         if (oldFileName) {
             infoSection.createEl("div", {
                 cls: "link-maintainer-info-item",
@@ -64,17 +66,17 @@ export class ResultsModal extends Modal {
         // New file name
         infoSection.createEl("div", {
             cls: "link-maintainer-info-item",
-            text: `New file name: ${this.newFileName}`,
+            text: `New file name: ${self.newFileName}`,
         });
 
         // Match list title
         contentEl.createEl("h3", { text: "Found References:" });
 
         // Group matches by file type
-        const markdownMatches = this.matches.filter(
+        const markdownMatches = self.matches.filter(
             (match) => !match.isCanvasNode,
         );
-        const canvasMatches = this.matches.filter(
+        const canvasMatches = self.matches.filter(
             (match) => match.isCanvasNode,
         );
 
@@ -103,7 +105,7 @@ export class ResultsModal extends Modal {
             });
 
             // Create clickable file link
-            const file = this.app.vault.getAbstractFileByPath(match.file);
+            const file = self.app.vault.getAbstractFileByPath(match.file);
             if (file instanceof TFile) {
                 const fileName = file.basename;
                 const fileLink = fileInfoContainer.createEl("a", {
@@ -112,7 +114,7 @@ export class ResultsModal extends Modal {
                 });
                 fileLink.addEventListener("click", async (event) => {
                     // Open file and jump to specified line
-                    const leaf = this.app.workspace.getLeaf();
+                    const leaf = self.app.workspace.getLeaf();
                     await leaf.openFile(file);
                     const view = leaf.view as MarkdownView;
                     if (view.editor) {
@@ -176,7 +178,7 @@ export class ResultsModal extends Modal {
             text: "Cancel",
         });
         cancelButton.addEventListener("click", () => {
-            this.close();
+            self.close();
         });
 
         const confirmButton = buttonContainer.createEl("button", {
@@ -184,18 +186,20 @@ export class ResultsModal extends Modal {
             cls: "mod-cta",
         });
         confirmButton.addEventListener("click", () => {
-            this.close();
-            this.onConfirm(
-                this.matches,
-                this.newFileName,
-                this.reference,
-                this.linkType,
+            self.close();
+            self.onConfirm(
+                self.matches,
+                self.newFileName,
+                self.reference,
+                self.linkType,
             );
         });
     }
 
     onClose() {
         const { contentEl } = this;
+        const self = this;
+
         contentEl.empty();
     }
 }

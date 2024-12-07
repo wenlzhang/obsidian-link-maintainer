@@ -57,6 +57,7 @@ const buildOptions = {
     sourcemap: prod ? false : 'inline',
     treeShaking: true,
     outfile: join(buildDir, 'main.js'),
+    absWorkingDir: process.cwd(),
 };
 
 if (prod) {

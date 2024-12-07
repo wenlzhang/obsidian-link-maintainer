@@ -11,10 +11,12 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
 
     display(): void {
         const { containerEl } = this;
+        const self = this;
+
         containerEl.empty();
 
         // Link Update Behavior Section
-        new Setting(this.containerEl).setName("Link updates").setHeading();
+        new Setting(self.containerEl).setName("Link updates").setHeading();
 
         // Replace existing block links setting
         new Setting(containerEl)
@@ -24,10 +26,10 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
             )
             .addToggle((toggle) => {
                 toggle
-                    .setValue(this.plugin.settings.replaceExistingBlockLinks)
+                    .setValue(self.plugin.settings.replaceExistingBlockLinks)
                     .onChange(async (value) => {
-                        this.plugin.settings.replaceExistingBlockLinks = value;
-                        await this.plugin.saveSettings();
+                        self.plugin.settings.replaceExistingBlockLinks = value;
+                        await self.plugin.saveSettings();
                     });
             });
 
@@ -39,15 +41,15 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
             )
             .addToggle((toggle) => {
                 toggle
-                    .setValue(this.plugin.settings.showConfirmationDialog)
+                    .setValue(self.plugin.settings.showConfirmationDialog)
                     .onChange(async (value) => {
-                        this.plugin.settings.showConfirmationDialog = value;
-                        await this.plugin.saveSettings();
+                        self.plugin.settings.showConfirmationDialog = value;
+                        await self.plugin.saveSettings();
                     });
             });
 
         // Change Tracking Section
-        new Setting(this.containerEl).setName("Change tracking").setHeading();
+        new Setting(self.containerEl).setName("Change tracking").setHeading();
 
         // Enable change logging setting
         new Setting(containerEl)
@@ -55,23 +57,23 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
             .setDesc("Keep a record of all link updates for future reference")
             .addToggle((toggle) => {
                 toggle
-                    .setValue(this.plugin.settings.enableChangeLogging)
+                    .setValue(self.plugin.settings.enableChangeLogging)
                     .onChange(async (value) => {
-                        this.plugin.settings.enableChangeLogging = value;
-                        await this.plugin.saveSettings();
+                        self.plugin.settings.enableChangeLogging = value;
+                        await self.plugin.saveSettings();
                     });
             });
 
         // Log file path setting (only show if logging is enabled)
-        if (this.plugin.settings.enableChangeLogging) {
+        if (self.plugin.settings.enableChangeLogging) {
             new Setting(containerEl)
                 .setName("Log file path")
                 .setDesc("Path to the log file (relative to vault root)")
                 .addText((text) => {
-                    text.setValue(this.plugin.settings.logFilePath).onChange(
+                    text.setValue(self.plugin.settings.logFilePath).onChange(
                         async (value) => {
-                            this.plugin.settings.logFilePath = value;
-                            await this.plugin.saveSettings();
+                            self.plugin.settings.logFilePath = value;
+                            await self.plugin.saveSettings();
                         },
                     );
                 });

@@ -30,6 +30,7 @@ export class SearchModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
+        const self = this;
         contentEl.addClass("link-maintainer-modal");
         contentEl.createEl("h2", {
             text: "Link Maintainer: Update Link References",
@@ -55,7 +56,7 @@ export class SearchModal extends Modal {
         linkTypeDropdown.addEventListener("change", (event: Event) => {
             const selectedValue = (event.target as HTMLSelectElement)
                 .value as LinkType;
-            this.linkType = selectedValue;
+            self.linkType = selectedValue;
         });
 
         // Old file name input
@@ -63,14 +64,14 @@ export class SearchModal extends Modal {
         oldFileContainer.createEl("label", { text: "Old File Name:" });
         new TextComponent(oldFileContainer)
             .setPlaceholder("Enter old file name (e.g., fooA)")
-            .onChange((value) => (this.oldFileName = value));
+            .onChange((value) => (self.oldFileName = value));
 
         // New file name input
         const newFileContainer = contentEl.createDiv({ cls: "setting-item" });
         newFileContainer.createEl("label", { text: "New File Name:" });
         new TextComponent(newFileContainer)
             .setPlaceholder("Enter new file name (e.g., fooB)")
-            .onChange((value) => (this.newFileName = value));
+            .onChange((value) => (self.newFileName = value));
 
         // Block ID input (conditionally shown)
         const blockContainer = contentEl.createDiv({
@@ -79,7 +80,7 @@ export class SearchModal extends Modal {
         blockContainer.createEl("label", { text: "Block ID:" });
         const blockInput = new TextComponent(blockContainer)
             .setPlaceholder("Enter block ID (e.g., bar1234)")
-            .onChange((value) => (this.blockId = value));
+            .onChange((value) => (self.blockId = value));
         blockContainer.toggleClass("active", false);
 
         // Heading input (conditionally shown)
@@ -89,7 +90,7 @@ export class SearchModal extends Modal {
         headingContainer.createEl("label", { text: "Heading:" });
         const headingInput = new TextComponent(headingContainer)
             .setPlaceholder("Enter heading text (e.g., Introduction)")
-            .onChange((value) => (this.headingText = value));
+            .onChange((value) => (self.headingText = value));
         headingContainer.toggleClass("active", false);
 
         // Toggle visibility of Block ID and Heading inputs based on link type
@@ -113,41 +114,43 @@ export class SearchModal extends Modal {
             text: "Search",
         });
         searchButton.addEventListener("click", () => {
-            if (!this.oldFileName || !this.newFileName) {
+            if (!self.oldFileName || !self.newFileName) {
                 new Notice("Please enter both file names");
                 return;
             }
 
             let reference: string | null = null;
-            switch (this.linkType) {
+            switch (self.linkType) {
                 case LinkType.BLOCK:
-                    if (!this.blockId) {
+                    if (!self.blockId) {
                         new Notice("Please enter a block ID");
                         return;
                     }
-                    reference = this.blockId;
+                    reference = self.blockId;
                     break;
                 case LinkType.HEADING:
-                    if (!this.headingText) {
+                    if (!self.headingText) {
                         new Notice("Please enter a heading");
                         return;
                     }
-                    reference = this.headingText;
+                    reference = self.headingText;
                     break;
             }
 
-            this.onSubmit(
-                this.oldFileName,
-                this.newFileName,
+            self.onSubmit(
+                self.oldFileName,
+                self.newFileName,
                 reference,
-                this.linkType,
+                self.linkType,
             );
-            this.close();
+            self.close();
         });
     }
 
     onClose() {
         const { contentEl } = this;
+        const self = this;
+
         contentEl.empty(); // Clears modal content when closed
     }
 }
