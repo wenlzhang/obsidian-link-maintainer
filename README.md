@@ -90,6 +90,51 @@ Before: [[oldNote#^abc123]]
 After:  [[newNote#^abc123]]
 ```
 
+## Block Reference Handling
+
+### Smart Block Reference Updates
+
+The plugin includes an intelligent block reference update system that helps maintain the integrity of your links while allowing flexibility in how updates are handled.
+
+#### Default Behavior (Safe Mode)
+By default, the plugin only updates block references that are "broken" or no longer valid. This means:
+- If a block reference exists in multiple files, links pointing to valid locations won't be changed
+- Only links pointing to locations where the block no longer exists will be updated
+- This prevents accidentally breaking valid references when blocks are duplicated across notes
+
+#### Force Update Mode
+You can enable "Force Update All Block References" in settings to change this behavior:
+- All block references will be updated to point to the new location
+- This is useful when you want to ensure all references point to a specific instance of a block
+- Helpful when consolidating or reorganizing notes where blocks might exist in multiple places
+
+#### Example Scenario
+
+Consider this situation:
+```markdown
+// original-note.md
+Some text with a block reference ^block123
+
+// another-note.md
+A link to the block [[original-note#^block123]]
+
+// new-note.md
+The same text copied over ^block123
+```
+
+With default settings (Force Update OFF):
+- The link in `another-note.md` won't be updated because it points to a valid block
+- This preserves existing valid references
+
+With Force Update enabled:
+- The link will be updated to `[[new-note#^block123]]`
+- This ensures all references point to the new location
+- Useful when you want to consolidate all references to a single instance
+
+Choose the setting based on your note organization style:
+- Keep it OFF if you often have intentionally duplicated blocks
+- Turn it ON if you prefer to maintain single sources of truth for blocks
+
 ## Settings
 
 The plugin provides several settings to customize its behavior:
