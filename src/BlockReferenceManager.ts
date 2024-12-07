@@ -10,9 +10,14 @@ export class BlockReferenceManager {
     ) {}
 
     async searchAndUpdateBlockReferences(blockId: string, newFileName: string) {
-        const matches = await this.searchBlockReferences(blockId, newFileName);
+        const { matches, alreadyUpdatedCount } = await this.searchBlockReferences(blockId, newFileName);
+        
         if (matches.length === 0) {
-            new Notice('No references found');
+            if (alreadyUpdatedCount > 0) {
+                new Notice(`All found references (${alreadyUpdatedCount}) are already up to date`);
+            } else {
+                new Notice('No references found');
+            }
             return;
         }
 
@@ -26,8 +31,9 @@ export class BlockReferenceManager {
         ).open();
     }
 
-    private async searchBlockReferences(blockId: string, excludeFileName: string): Promise<LinkMatch[]> {
+    private async searchBlockReferences(blockId: string, excludeFileName: string): Promise<{ matches: LinkMatch[], alreadyUpdatedCount: number }> {
         const matches: LinkMatch[] = [];
+        let alreadyUpdatedCount = 0;
         
         // Get both markdown and canvas files
         const allFiles = this.app.vault.getFiles();
@@ -36,8 +42,9 @@ export class BlockReferenceManager {
             file.basename !== excludeFileName
         );
         
-        // Create regex pattern to match block ID references
+        // Create regex patterns
         const blockIdPattern = new RegExp(`\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]|\\^${blockId}(?=[\\s\\]\\n]|$)`);
+        const updatedLinkPattern = new RegExp(`\\[\\[${excludeFileName}#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]`);
         
         for (const file of relevantFiles) {
             // Read file content
@@ -55,6 +62,12 @@ export class BlockReferenceManager {
                             if (node.text) {
                                 const match = node.text.match(blockIdPattern);
                                 if (match) {
+                                    // Check if the link is already updated
+                                    if (updatedLinkPattern.test(node.text)) {
+                                        alreadyUpdatedCount++;
+                                        continue;
+                                    }
+
                                     // Extract filename (if it's a complete link)
                                     const linkMatch = node.text.match(/\[\[([^\]#|]+)/);
                                     const oldFileName = linkMatch ? linkMatch[1].trim() : null;
@@ -75,7 +88,7 @@ export class BlockReferenceManager {
                                     matches.push({
                                         file: file.path,
                                         lineContent: node.text,
-                                        lineNumber: canvasData.nodes.indexOf(node), // Get actual index
+                                        lineNumber: canvasData.nodes.indexOf(node),
                                         linkText: node.text,
                                         oldFileName: oldFileName,
                                         isCanvasNode: true,
@@ -90,14 +103,19 @@ export class BlockReferenceManager {
                     continue;
                 }
             } else {
-                // Handle markdown files as before
+                // Handle markdown files
                 const lines = content.split('\n');
                 
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
-                    // Use regex to match complete block ID
                     const match = line.match(blockIdPattern);
                     if (match) {
+                        // Check if the link is already updated
+                        if (updatedLinkPattern.test(line)) {
+                            alreadyUpdatedCount++;
+                            continue;
+                        }
+
                         // Extract filename (if it's a complete link)
                         const linkMatch = line.match(/\[\[([^\]#|]+)/);
                         const oldFileName = linkMatch ? linkMatch[1].trim() : null;
@@ -120,14 +138,13 @@ export class BlockReferenceManager {
                             lineContent: line,
                             lineNumber: i,
                             linkText: line,
-                            oldFileName: oldFileName,
-                            isCanvasNode: false
+                            oldFileName: oldFileName
                         });
                     }
                 }
             }
         }
         
-        return matches;
+        return { matches, alreadyUpdatedCount };
     }
 }

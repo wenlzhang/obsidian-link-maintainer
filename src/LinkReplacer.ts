@@ -61,6 +61,12 @@ export class LinkReplacer {
                                     const oldText = node.text;
                                     let newText: string;
                                     
+                                    // Check if the link is already updated
+                                    const existingLinkPattern = new RegExp(`\\[\\[${newFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
+                                    if (existingLinkPattern.test(oldText)) {
+                                        return; // Skip if already updated
+                                    }
+                                    
                                     if (match.oldFileName) {
                                         // If old file name is present, replace complete link
                                         const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
@@ -108,6 +114,12 @@ export class LinkReplacer {
                 fileMatches.forEach(match => {
                     const line = lines[match.lineNumber];
                     let newLine: string;
+                    
+                    // Check if the link is already updated
+                    const existingLinkPattern = new RegExp(`\\[\\[${newFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
+                    if (existingLinkPattern.test(line)) {
+                        return; // Skip if already updated
+                    }
                     
                     if (match.oldFileName) {
                         // If old file name is present, replace complete link
