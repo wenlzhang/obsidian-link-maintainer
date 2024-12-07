@@ -1,8 +1,58 @@
 # Link Maintainer
 
-[![GitHub release (Latest by date)](https://img-shields.io/github/v/release/wenlzhang/obsidian-link-maintainer)](https://github.com/wenlzhang/obsidian-link-maintainer/releases) ![GitHub all releases](https://img.shields.io/github/downloads/wenlzhang/obsidian-link-maintainer/total?color=success)
+[![GitHub release (Latest by date)](https://img-shields.io/github/v/release/wenlzhang/obsidian-link-maintainer)](https://github.com/wenlzhang/obsidian-link-maintainer/releases) ![GitHub all releases](https://img-shields.io/github/downloads/wenlzhang/obsidian-link-maintainer/total?color=success)
 
 An [Obsidian](https://obsidian.md/) plugin that helps you maintain various types of links when splitting or reorganizing notes, with a focus on safety and reliability.
+
+## The Story Behind the Plugin
+
+Have you ever found yourself in this situation? You're working with a long note in Obsidian, and you realize that a particular section would be more valuable as its own note. This is a common scenario when:
+
+- You want to make certain information more discoverable
+- You need to link the same content in multiple contexts
+- You're reorganizing your knowledge base for better structure
+
+Obsidian provides ways to extract text into a new note, either through its native features or various community plugins. However, there's a catch: **what happens to all the block references pointing to that text?**
+
+### The Block Reference Challenge
+
+Let's say you have:
+```markdown
+// original-long-note.md
+A long note with many sections...
+Some important text here ^important-block
+More content...
+
+// other-notes.md
+References to the important text [[original-long-note#^important-block]]
+```
+
+When you extract the section with `^important-block` into a new note:
+
+1. The block ID moves to the new note
+2. All existing references in other notes still point to the original note
+3. These references are now broken because the block ID no longer exists there
+
+### The Manual Fix
+
+Without this plugin, you would need to:
+
+1. Find every note that references the block ID
+2. Manually update each reference to point to the new note
+3. Repeat this process for canvas files
+4. Hope you didn't miss any references
+
+This is tedious, error-prone, and time-consuming - especially if the block is referenced in multiple places or canvas files.
+
+### The Solution
+
+This is exactly why Link Maintainer exists. With this plugin, you can:
+
+1. Select the line containing the block ID
+2. Run a single command
+3. Let the plugin automatically update all references - both in markdown notes and canvas files
+
+No more manual searching and replacing. No more broken references. Just smooth, reliable link maintenance that lets you focus on organizing your knowledge the way you want.
 
 ## Features
 
