@@ -1,4 +1,4 @@
-import { App, Notice, TFile } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { LinkMatch, LinkType } from './types';
 import { ResultsModal } from './ResultsModal';
 
@@ -11,22 +11,20 @@ export class BlockReferenceManager {
 
     async searchAndUpdateBlockReferences(blockId: string, newFileName: string) {
         const matches = await this.searchBlockReferences(blockId, newFileName);
-        if (matches.length === 0) {
-            new Notice('No references found');
-            return;
+        if (matches.length > 0) {
+            const modal = new ResultsModal(
+                this.app,
+                matches,
+                newFileName,
+                blockId,
+                LinkType.BLOCK,
+                this.replaceLinks
+            );
+            modal.open();
         }
-
-        new ResultsModal(
-            this.app,
-            matches,
-            newFileName,
-            blockId,
-            LinkType.BLOCK,
-            this.replaceLinks.bind(this)
-        ).open();
     }
 
-    private async searchBlockReferences(blockId: string, excludeFileName: string): Promise<LinkMatch[]> {
+    public async searchBlockReferences(blockId: string, excludeFileName: string): Promise<LinkMatch[]> {
         const matches: LinkMatch[] = [];
         const files = this.app.vault.getMarkdownFiles();
         
@@ -63,7 +61,7 @@ export class BlockReferenceManager {
                             }
                         }
                     }
-                    
+
                     matches.push({
                         file: file.path,
                         lineContent: line,
@@ -74,7 +72,7 @@ export class BlockReferenceManager {
                 }
             }
         }
-        
+
         return matches;
     }
 }
