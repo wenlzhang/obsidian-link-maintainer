@@ -1,6 +1,6 @@
 # Link Maintainer
 
-[![GitHub release (Latest by date)](https://img-shields.io/github/v/release/wenlzhang/obsidian-link-maintainer)](https://github.com/wenlzhang/obsidian-link-maintainer/releases) ![GitHub all releases](https://img-shields.io/github/downloads/wenlzhang/obsidian-link-maintainer/total?color=success)
+[![GitHub release (Latest by date)](https://img.shields.io/github/v/release/wenlzhang/obsidian-link-maintainer)](https://github.com/wenlzhang/obsidian-link-maintainer/releases) ![GitHub all releases](https://img.shields.io/github/downloads/wenlzhang/obsidian-link-maintainer/total?color=success)
 
 An [Obsidian](https://obsidian.md/) plugin that helps you maintain block references when splitting or reorganizing notes, with a focus on safety and reliability.
 
