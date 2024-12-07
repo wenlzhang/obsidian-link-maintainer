@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Help maintain and update links in Obsidian notes when files are renamed.",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "npm run prettier && node esbuild.config.mjs production && cp manifest.json build && [ -f styles.css ] && cp styles.css build/ || true",
@@ -18,10 +19,15 @@
   "devDependencies": {
     "@eslint/js": "^9.16.0",
     "@types/node": "^16.11.7",
-    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/eslint-plugin": "^5.40.1",
+    "@typescript-eslint/parser": "^5.40.1",
     "builtin-modules": "^4.0.0",
     "esbuild": "^0.13.15",
-    "eslint": "^9.16.0",
+    "eslint": "^8.24.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
     "obsidian": "latest",
     "prettier": "^3.4.2",
     "typescript": "^4.9.5"
