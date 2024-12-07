@@ -17,6 +17,10 @@ export async function writeBatchToLog(
     const originalLink = exampleChange && exampleChange.originalContent ? getCleanBlockRef(exampleChange.originalContent.trim()) : '';
     const updatedLink = exampleChange && exampleChange.newContent ? getCleanBlockRef(exampleChange.newContent.trim()) : '';
 
+    // Group changes by file type
+    const markdownChanges = batch.changes?.filter(change => !change.originalFile.endsWith('.canvas')) || [];
+    const canvasChanges = batch.changes?.filter(change => change.originalFile.endsWith('.canvas')) || [];
+
     const logEntry = [
         `## Batch Update at ${batch.timestamp}`,
         '',
@@ -30,21 +34,40 @@ export async function writeBatchToLog(
         `- **Files Affected**: ${batch.changes?.length}`,
         '',
         '### Changes',
-        '',
-        batch.changes?.filter(change => change && change.originalFile)
-            .map(change => 
+        ''
+    ];
+
+    // Add markdown changes with line numbers
+    if (markdownChanges.length > 0) {
+        logEntry.push(
+            ...markdownChanges.map(change => 
                 `- [[${getNoteName(change.originalFile)}]] (Line ${change.lineNumber + 1})`
-            ).join('\n') || '',
-        '',
-        '---\n'
-    ].join('\n');
+            )
+        );
+    }
+
+    // Add canvas changes without line numbers
+    if (canvasChanges.length > 0) {
+        if (markdownChanges.length > 0) {
+            logEntry.push(''); // Add spacing if we had markdown changes
+        }
+        logEntry.push(
+            ...canvasChanges.map(change => 
+                `- [[${getNoteName(change.originalFile)}]] (Canvas)`
+            )
+        );
+    }
+
+    logEntry.push('', '---\n');
+
+    const finalLogEntry = logEntry.join('\n');
 
     if (!(logFile instanceof TFile)) {
         // Create log file if it doesn't exist
-        await app.vault.create(settings.logFilePath, logEntry);
+        await app.vault.create(settings.logFilePath, finalLogEntry);
     } else {
         // Append to existing log file
         const currentContent = await app.vault.read(logFile);
-        await app.vault.modify(logFile, logEntry + currentContent);
+        await app.vault.modify(logFile, finalLogEntry + currentContent);
     }
 }
