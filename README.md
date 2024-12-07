@@ -65,7 +65,6 @@ No more manual searching and replacing. No more broken references. Just smooth, 
 
 ### Smart Block Reference Handling
 
-- **Smart block reference updates**:
   - Update block references directly from selected text
   - Option to replace or preserve existing block links
     - Default safe mode: only updates broken or invalid links
@@ -89,6 +88,7 @@ The plugin provides a command to help you maintain block references in your vaul
 ### Available Command
 
 **Update block references from selection** (`Cmd/Ctrl + P`)
+
 - Select text containing a block ID in your note
 - Run the command through Command Palette
 - The plugin will update all references to that block
@@ -98,18 +98,15 @@ The plugin provides a command to help you maintain block references in your vaul
 1. **Select Block Reference**:
    - Find the line containing your block ID (e.g., `^important-block`)
    - Select that line in your note
-
 2. **Run Command**:
    - Open Command Palette (`Cmd/Ctrl + P`)
    - Choose "Update block references from selection"
-
 3. **Review Changes**:
    - The plugin shows you all found references
    - Each reference shows:
      - File location
      - Current content
      - Preview of the change
-
 4. **Confirm Updates**:
    - Review the proposed changes
    - Click "Confirm" to apply the updates
