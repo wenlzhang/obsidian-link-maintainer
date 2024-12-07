@@ -56,10 +56,10 @@ No more manual searching and replacing. No more broken references. Just smooth, 
 
 ## Features
 
-### Comprehensive Block Reference Support
+### Block Reference Support
 
 - **Update block references**:
-  - Automatically update block references in markdown notes and canvas files
+  - Automatically update block references in markdown notes
 - **Canvas Integration**:
   - Updates block references within canvas nodes
 
@@ -152,37 +152,6 @@ Some important text here ^important-block
 Before: [[old-note#^important-block]]
 After:  [[new-note#^important-block]]
 ```
-
-## Block Reference Handling
-
-### Smart Block Reference Updates
-
-The plugin includes an intelligent block reference update system that helps maintain the integrity of your links while allowing flexibility in how updates are handled.
-
-## Safety Features
-
-This plugin implements several safety and redundancy features following PTKM principles:
-
-1. **Prevention**:
-   - Confirmation dialogs before updates
-   - Preview of all changes
-   - Safe mode for block references
-   - Validation of link targets
-2. **Tracking**:
-   - Comprehensive change logging
-   - Detailed update history
-   - Clear modification records
-   - Canvas node tracking
-3. **Transparency**:
-   - Clear display of affected files
-   - Explicit update confirmations
-   - Readable log format
-   - Visual preview of changes
-4. **Maintainability**:
-   - Structured log files
-   - Configurable settings
-   - Flexible update modes
-   - Canvas compatibility
 
 ## Settings
 
