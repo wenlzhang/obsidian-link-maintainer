@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-link-maintainer",
 	"name": "Link Maintainer",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"minAppVersion": "1.0.0",
 	"description": "Help maintain and update links in Obsidian notes when files are renamed.",
 	"author": "wenlzhang",
