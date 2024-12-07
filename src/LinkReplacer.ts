@@ -7,7 +7,7 @@ export interface LinkReplacerDependencies {
     settings: { showConfirmationDialog: boolean };
     initBatchLog: (blockId: string, newFileName: string) => void;
     showConfirmationDialog: (matches: LinkMatch[], newFileName: string) => Promise<boolean>;
-    logChange: (change: BatchChangeLog) => Promise<void>;
+    logChange: (change: ChangeEntry) => Promise<void>;
     writeBatchToLog: () => Promise<void>;
     clearBatchLog: () => void;
 }
@@ -198,13 +198,8 @@ export class LinkReplacer {
                 originalFile: filePath
             };
 
-            this.deps.logChange({
-                timestamp: new Date().toISOString(),
-                blockId: reference || '',
-                newFileName: newFileName,
-                description: `Updated block reference in ${match.isCanvasNode ? 'canvas node' : 'markdown file'}`,
-                changes: [changeEntry]
-            });
+            // Just log the change entry, not the whole batch
+            this.deps.logChange(changeEntry);
             
             return { text: newText, updated: true };
         }
