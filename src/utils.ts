@@ -11,6 +11,19 @@ export const REGEX = {
 };
 
 /**
+ * Gets a clean note name from a file path
+ * @param filePath The file path to clean
+ * @returns A clean note name without path or extension
+ */
+export function getNoteName(filePath: string | undefined | null): string {
+    if (!filePath) return 'Unknown File';
+    // Remove folders and extension, get just the note name
+    const parts = filePath.split('/');
+    const fileName = parts.length > 0 ? parts[parts.length - 1] : filePath;
+    return fileName.replace(/\.md$/, '');
+}
+
+/**
  * Extracts clean block reference from content
  * @param content The content containing the reference
  * @returns The cleaned reference
@@ -51,7 +64,7 @@ export function extractBlockInfo(text: string, app: App): ExtractedInfo | null {
         const activeFile = app.workspace.getActiveFile();
         if (activeFile) {
             return {
-                fileName: activeFile.basename,
+                fileName: getNoteName(activeFile.path),
                 blockId: match[1]
             };
         }

@@ -1,6 +1,6 @@
 import { App, TFile } from 'obsidian';
 import { BatchChangeLog, ChangeEntry, LinkMaintainerSettings } from './types';
-import { getCleanBlockRef } from './utils';
+import { getCleanBlockRef, getNoteName } from './utils';
 
 export async function writeBatchToLog(
     app: App,
@@ -12,16 +12,10 @@ export async function writeBatchToLog(
     const logFile = app.vault.getAbstractFileByPath(settings.logFilePath);
     const batch = currentBatchLog;
 
-    // Helper function to get clean note name for links
-    const getNoteName = (filePath: string): string => {
-        // Remove folders and extension, get just the note name
-        return filePath.split('/').pop()?.replace(/\.md$/, '') || filePath;
-    };
-
     // Get the first change to use as an example of the link update
-    const exampleChange = batch.changes[0];
-    const originalLink = exampleChange ? getCleanBlockRef(exampleChange.originalContent.trim()) : '';
-    const updatedLink = exampleChange ? getCleanBlockRef(exampleChange.newContent.trim()) : '';
+    const exampleChange = batch.changes && batch.changes.length > 0 ? batch.changes[0] : null;
+    const originalLink = exampleChange && exampleChange.originalContent ? getCleanBlockRef(exampleChange.originalContent.trim()) : '';
+    const updatedLink = exampleChange && exampleChange.newContent ? getCleanBlockRef(exampleChange.newContent.trim()) : '';
 
     const logEntry = [
         `## Batch Update at ${batch.timestamp}`,
@@ -33,13 +27,14 @@ export async function writeBatchToLog(
         `- **Block ID**: \`${batch.blockId}\``,
         `- Original Link: \`${originalLink}\``,
         `- Updated Link: \`${updatedLink}\``,
-        `- **Files Affected**: ${batch.changes.length}`,
+        `- **Files Affected**: ${batch.changes?.length}`,
         '',
         '### Changes',
         '',
-        batch.changes.map(change => 
-            `- [[${getNoteName(change.originalFile)}]] (Line ${change.lineNumber + 1})`
-        ).join('\n'),
+        batch.changes?.filter(change => change && change.originalFile)
+            .map(change => 
+                `- [[${getNoteName(change.originalFile)}]] (Line ${change.lineNumber + 1})`
+            ).join('\n') || '',
         '',
         '---\n'
     ].join('\n');
