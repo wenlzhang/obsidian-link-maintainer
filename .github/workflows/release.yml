@@ -48,8 +48,8 @@ jobs:
           body_path: changelog.md
           draft: true
           files: |
-            main.js
-            manifest.json
-            styles.css
+            build/main.js
+            build/manifest.json
+            build/styles.css
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
