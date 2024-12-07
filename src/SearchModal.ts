@@ -48,27 +48,27 @@ export class SearchModal extends Modal {
             .onChange(value => (this.newFileName = value));
 
         // Block ID input (conditionally shown)
-        const blockContainer = contentEl.createDiv({ cls: 'setting-item' });
+        const blockContainer = contentEl.createDiv({ cls: 'setting-item block-container' });
         blockContainer.createEl("label", { text: "Block ID:" });
         const blockInput = new TextComponent(blockContainer)
             .setPlaceholder("Enter block ID (e.g., bar1234)")
             .onChange(value => (this.blockId = value));
-        blockContainer.style.display = 'none'; // Hidden by default
+        blockContainer.toggleClass('active', false);
 
         // Heading input (conditionally shown)
-        const headingContainer = contentEl.createDiv({ cls: 'setting-item' });
+        const headingContainer = contentEl.createDiv({ cls: 'setting-item heading-container' });
         headingContainer.createEl("label", { text: "Heading:" });
         const headingInput = new TextComponent(headingContainer)
             .setPlaceholder("Enter heading text (e.g., Introduction)")
             .onChange(value => (this.headingText = value));
-        headingContainer.style.display = 'none'; // Hidden by default
+        headingContainer.toggleClass('active', false);
 
         // Toggle visibility of Block ID and Heading inputs based on link type
         linkTypeDropdown.addEventListener("change", (event: Event) => {
             const selectedValue = (event.target as HTMLSelectElement).value as LinkType;
 
-            blockContainer.style.display = selectedValue === LinkType.BLOCK ? 'block' : 'none';
-            headingContainer.style.display = selectedValue === LinkType.HEADING ? 'block' : 'none';
+            blockContainer.toggleClass('active', selectedValue === LinkType.BLOCK);
+            headingContainer.toggleClass('active', selectedValue === LinkType.HEADING);
         });
 
         // Search button
