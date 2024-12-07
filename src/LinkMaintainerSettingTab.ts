@@ -1,4 +1,4 @@
-import LinkMaintainer from "main";
+import { LinkMaintainer } from "./main";
 import { PluginSettingTab, App, Setting } from "obsidian";
 
 export class LinkMaintainerSettingTab extends PluginSettingTab {

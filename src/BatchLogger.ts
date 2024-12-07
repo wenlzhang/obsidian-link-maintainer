@@ -4,12 +4,12 @@ import { getCleanBlockRef } from './utils';
 
 export async function writeBatchToLog(
     app: App,
-    settings: LinkMaintainerSettings,
+    logFilePath: string,
     currentBatchLog: BatchChangeLog | null
 ): Promise<void> {
-    if (!settings.enableChangeLogging || !currentBatchLog) return;
+    if (!currentBatchLog) return;
 
-    const logFile = app.vault.getAbstractFileByPath(settings.logFilePath);
+    const logFile = app.vault.getAbstractFileByPath(logFilePath);
     const batch = currentBatchLog;
 
     // Helper function to get clean note name for links
@@ -46,7 +46,7 @@ export async function writeBatchToLog(
 
     if (!(logFile instanceof TFile)) {
         // Create log file if it doesn't exist
-        await app.vault.create(settings.logFilePath, logEntry);
+        await app.vault.create(logFilePath, logEntry);
     } else {
         // Append to existing log file
         const currentContent = await app.vault.read(logFile);

@@ -1,9 +1,9 @@
 import { TFile } from 'obsidian';
-import { LinkMatch, LinkType, BatchChangeLog } from './types';
+import { LinkMatch, LinkType, BatchChangeLog, ChangeEntry, ILinkMaintainer, LinkMaintainerSettings } from './types';
 
 export interface LinkReplacerDependencies {
-    plugin: any;
-    settings: { showConfirmationDialog: boolean };
+    plugin: ILinkMaintainer;
+    settings: LinkMaintainerSettings;
     initBatchLog: (blockId: string, newFileName: string) => void;
     showConfirmationDialog: (matches: LinkMatch[], newFileName: string) => Promise<boolean>;
     logChange: (change: BatchChangeLog) => Promise<void>;
@@ -12,31 +12,40 @@ export interface LinkReplacerDependencies {
 }
 
 export class LinkReplacer {
-    constructor(private deps: LinkReplacerDependencies) {}
+    constructor(private config: {
+        plugin: ILinkMaintainer;
+        settings: LinkMaintainerSettings;
+        initBatchLog: (blockId: string, newFileName: string) => void;
+        showConfirmationDialog: (matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) => Promise<void>;
+        logChange: (change: ChangeEntry) => Promise<void>;
+        writeBatchToLog: () => Promise<void>;
+        clearBatchLog: () => void;
+    }) {}
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
-        // Initialize batch log
-        if (reference) {
-            this.deps.plugin.initBatchLog(reference, newFileName);
+        // Initialize batch log only if we have both required parameters
+        if (reference && reference.trim() && newFileName && newFileName.trim()) {
+            this.config.initBatchLog(reference, newFileName);
         }
 
         // If confirmation dialog is enabled, show it
-        if (this.deps.settings.showConfirmationDialog) {
-            const confirmed = await this.deps.plugin.showConfirmationDialog(matches, newFileName);
-            if (!confirmed) {
-                this.deps.plugin.clearBatchLog(); // Clear batch log if cancelled
+        if (this.config.settings.showConfirmationDialog) {
+            try {
+                await this.config.showConfirmationDialog(matches, newFileName, reference, linkType);
+            } catch (error) {
+                this.config.clearBatchLog(); // Clear batch log if cancelled
                 return;
             }
         }
 
         // Iterate over each match
         for (const match of matches) {
-            const file = this.deps.plugin.app.vault.getAbstractFileByPath(match.file);
+            const file = this.config.plugin.app.vault.getAbstractFileByPath(match.file);
             if (!(file instanceof TFile)) {
                 continue;
             }
 
-            const content = await this.deps.plugin.app.vault.read(file);
+            const content = await this.config.plugin.app.vault.read(file);
             const lines = content.split('\n');
             const line = lines[match.lineNumber];
             
@@ -53,7 +62,7 @@ export class LinkReplacer {
             
             if (newLine !== line) {
                 // Log the change
-                await this.deps.plugin.logChange({
+                await this.config.logChange({
                     timestamp: new Date().toISOString(),
                     originalFile: match.file,
                     lineNumber: match.lineNumber,
@@ -66,11 +75,11 @@ export class LinkReplacer {
 
                 // Update the line
                 lines[match.lineNumber] = newLine;
-                await this.deps.plugin.app.vault.modify(file, lines.join('\n'));
+                await this.config.plugin.app.vault.modify(file, lines.join('\n'));
             }
         }
 
         // Write batch log to file
-        await this.deps.plugin.writeBatchToLog();
+        await this.config.writeBatchToLog();
     }
 }

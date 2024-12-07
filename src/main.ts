@@ -1,24 +1,37 @@
-import { App, Plugin, Notice, TFile } from 'obsidian';
+import { App, Plugin, PluginManifest, Notice, TFile, Modal, Editor } from 'obsidian';
 import { getCleanBlockRef, extractBlockInfo } from './utils';
-import { LinkMaintainerSettingTab } from 'src/LinkMaintainerSettingTab';
-import { DEFAULT_SETTINGS } from 'DEFAULT_SETTINGS';
-import { SearchModal } from './SearchModal';
+import { LinkMaintainerSettingTab } from './LinkMaintainerSettingTab';
+import { DEFAULT_SETTINGS } from './DEFAULT_SETTINGS';
+import { LinkMaintainerSettings, BatchChangeLog, LinkMatch, LinkType, ChangeEntry, ILinkMaintainer } from './types';
 import { SearchLinks } from './searchLinks';
-import { BlockReferenceManager } from './BlockReferenceManager';
 import { LinkReplacer } from './LinkReplacer';
-import { showConfirmationDialog } from './ConfirmationDialog';
+import { BlockReferenceManager } from './BlockReferenceManager';
+import { ConfirmationDialog } from './ConfirmationDialog';
 import { writeBatchToLog } from './BatchLogger';
-import { LinkMatch, ExtractedInfo, LinkType, LinkMaintainerSettings, ChangeEntry, BatchChangeLog } from './types';
 
-export default class LinkMaintainer extends Plugin {
-    settings: LinkMaintainerSettings;
-    private currentBatchLog: BatchChangeLog | null = null;
-    private searchLinksHelper: SearchLinks;
-    private blockReferenceManager: BlockReferenceManager;
-    private linkReplacer: LinkReplacer;
+import { SearchModal } from './SearchModal';
 
-    constructor(app: App, manifest: any) {
+export class LinkMaintainer extends Plugin implements ILinkMaintainer {
+    public settings: LinkMaintainerSettings;
+    public currentBatchLog: BatchChangeLog | null = null;
+    public searchLinksHelper: SearchLinks;
+    public blockReferenceManager: BlockReferenceManager;
+    public linkReplacer: LinkReplacer;
+
+    constructor(app: App, manifest: PluginManifest) {
         super(app, manifest);
+        this.settings = Object.assign({}, DEFAULT_SETTINGS);
+        this.linkReplacer = new LinkReplacer({
+            plugin: this,
+            settings: this.settings,
+            initBatchLog: this.initBatchLog.bind(this),
+            showConfirmationDialog: this.showConfirmationDialog.bind(this),
+            logChange: this.logChange.bind(this),
+            writeBatchToLog: this.writeBatchToLog.bind(this),
+            clearBatchLog: this.clearBatchLog.bind(this)
+        });
+        this.searchLinksHelper = new SearchLinks(app, this.linkReplacer.replaceLinks.bind(this.linkReplacer));
+        this.blockReferenceManager = new BlockReferenceManager(app, this.linkReplacer.replaceLinks.bind(this.linkReplacer), this.settings.replaceExistingBlockLinks);
     }
 
     async logChange(change: ChangeEntry): Promise<void> {
@@ -29,38 +42,35 @@ export default class LinkMaintainer extends Plugin {
         }
     }
 
-    private initBatchLog(blockId: string, newFileName: string): void {
+    public initBatchLog(blockId: string, newFileName: string): void {
         this.currentBatchLog = {
             timestamp: new Date().toISOString(),
-            blockId: blockId,
-            newFileName: newFileName,
+            blockId,
+            newFileName,
             description: `Block reference update: ^${blockId} → ${newFileName}`,
             changes: []
         };
     }
 
-    private async writeBatchToLog(): Promise<void> {
-        await writeBatchToLog(this.app, this.settings, this.currentBatchLog);
-        this.currentBatchLog = null;
+    public async writeBatchToLog(): Promise<void> {
+        if (this.currentBatchLog && this.settings.enableChangeLogging) {
+            await writeBatchToLog(this.app, this.settings.logFilePath, this.currentBatchLog);
+        }
+        this.clearBatchLog();
     }
 
-    async showConfirmationDialog(matches: LinkMatch[], newFileName: string): Promise<boolean> {
-        return showConfirmationDialog(this.app, matches, newFileName);
+    async showConfirmationDialog(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType): Promise<void> {
+        const dialog = new ConfirmationDialog(this.app, matches, newFileName);
+        const confirmed = await dialog.showDialog();
+        if (!confirmed) {
+            throw new Error('User cancelled operation');
+        }
     }
 
     async onload() {
         await this.loadSettings();
         
         // Initialize helpers after settings are loaded
-        this.linkReplacer = new LinkReplacer({
-            plugin: this,
-            settings: this.settings,
-            initBatchLog: this.initBatchLog.bind(this),
-            showConfirmationDialog: this.showConfirmationDialog.bind(this),
-            logChange: this.logChange.bind(this),
-            writeBatchToLog: this.writeBatchToLog.bind(this),
-            clearBatchLog: () => { this.currentBatchLog = null; }
-        });
         this.searchLinksHelper = new SearchLinks(this.app, this.linkReplacer.replaceLinks.bind(this.linkReplacer));
         this.blockReferenceManager = new BlockReferenceManager(
             this.app,
@@ -130,5 +140,9 @@ export default class LinkMaintainer extends Plugin {
 
     async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
         return this.linkReplacer.replaceLinks(matches, newFileName, reference, linkType);
+    }
+
+    clearBatchLog(): void {
+        this.currentBatchLog = null;
     }
 }

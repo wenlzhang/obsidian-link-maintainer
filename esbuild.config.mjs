@@ -3,7 +3,7 @@ import esbuild from 'esbuild';
 const isProd = process.argv.includes('production');
 
 esbuild.build({
-  entryPoints: ['main.ts'],
+  entryPoints: ['src/main.ts'],
   bundle: true,
   minify: isProd,
   sourcemap: !isProd,

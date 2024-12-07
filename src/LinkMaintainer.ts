@@ -1,12 +1,38 @@
 import { LinkMaintainerSettingTab } from "./LinkMaintainerSettingTab";
-import { LinkMaintainerSettings, BatchChangeLog, LinkChangeLog, LinkMatch, DEFAULT_SETTINGS, SearchModal, LinkType, ResultsModal } from "../main";
+import { LinkMaintainerSettings, BatchChangeLog, LinkMatch, LinkType, ChangeEntry, ILinkMaintainer } from './types';
+import { DEFAULT_SETTINGS } from './DEFAULT_SETTINGS';
+import { SearchModal } from './SearchModal';
+import { ResultsModal } from './ResultsModal';
 import { TFile, Modal, Notice, Plugin, PluginManifest, Editor, App } from "obsidian";
 import { getCleanBlockRef, extractBlockInfo } from "./utils";
+import { SearchLinks } from './searchLinks';
+import { LinkReplacer } from './LinkReplacer';
+import { BlockReferenceManager } from './BlockReferenceManager';
+import { ConfirmationDialog } from './ConfirmationDialog';
+import { writeBatchToLog } from './BatchLogger';
 
-export default class LinkMaintainer extends Plugin {
-    settings: LinkMaintainerSettings;
-    private currentBatchLog: BatchChangeLog | null = null;
-    public manifest: PluginManifest;
+export class LinkMaintainer extends Plugin implements ILinkMaintainer {
+    public settings: LinkMaintainerSettings;
+    public currentBatchLog: BatchChangeLog | null = null;
+    public searchLinksHelper: SearchLinks;
+    public linkReplacer: LinkReplacer;
+    public blockReferenceManager: BlockReferenceManager;
+
+    constructor(app: App, manifest: PluginManifest) {
+        super(app, manifest);
+        this.settings = Object.assign({}, DEFAULT_SETTINGS);
+        this.linkReplacer = new LinkReplacer({
+            plugin: this,
+            settings: this.settings,
+            initBatchLog: this.initBatchLog.bind(this),
+            showConfirmationDialog: this.showConfirmationDialog.bind(this),
+            logChange: this.logChange.bind(this),
+            writeBatchToLog: this.writeBatchToLog.bind(this),
+            clearBatchLog: this.clearBatchLog.bind(this)
+        });
+        this.searchLinksHelper = new SearchLinks(app, this.linkReplacer.replaceLinks.bind(this.linkReplacer));
+        this.blockReferenceManager = new BlockReferenceManager(app, this.linkReplacer.replaceLinks.bind(this.linkReplacer), this.settings.replaceExistingBlockLinks);
+    }
 
     async onload(): Promise<void> {
         await super.onload();
@@ -51,7 +77,7 @@ export default class LinkMaintainer extends Plugin {
         });
     }
 
-    async logChange(change: LinkChangeLog): Promise<void> {
+    async logChange(change: ChangeEntry): Promise<void> {
         if (!this.settings.enableChangeLogging) return;
 
         if (this.currentBatchLog) {
@@ -59,133 +85,29 @@ export default class LinkMaintainer extends Plugin {
         }
     }
 
-    private initBatchLog(blockId: string, newFileName: string): void {
+    public initBatchLog(blockId: string, newFileName: string): void {
         this.currentBatchLog = {
             timestamp: new Date().toISOString(),
-            blockId: blockId,
-            newFileName: newFileName,
+            blockId,
+            newFileName,
             description: `Block reference update: ^${blockId} → ${newFileName}`,
             changes: []
         };
     }
 
-    private async writeBatchToLog(): Promise<void> {
-        if (!this.settings.enableChangeLogging || !this.currentBatchLog) return;
-
-        const logFile = this.app.vault.getAbstractFileByPath(this.settings.logFilePath);
-        const batch = this.currentBatchLog;
-
-        // Helper function to get clean note name for links
-        const getNoteName = (filePath: string): string => {
-            // Remove folders and extension, get just the note name
-            return filePath.split('/').pop()?.replace(/\.md$/, '') || filePath;
-        };
-
-        // Get the first change to use as an example of the link update
-        const exampleChange = batch.changes[0];
-        const originalLink = exampleChange ? getCleanBlockRef(exampleChange.originalContent.trim()) : '';
-        const updatedLink = exampleChange ? getCleanBlockRef(exampleChange.newContent.trim()) : '';
-
-        const logEntry = [
-            `## Batch Update at ${batch.timestamp}`,
-            '',
-            `> Block reference update: ${batch.blockId} → ${getNoteName(batch.newFileName)}`,
-            '',
-            '### Details',
-            '',
-            `- **Block ID**: \`${batch.blockId}\``,
-            `- Original Link: \`${originalLink}\``,
-            `- Updated Link: \`${updatedLink}\``,
-            `- **Files Affected**: ${batch.changes.length}`,
-            '',
-            '### Changes',
-            '',
-            batch.changes.map(change => `- [[${getNoteName(change.originalFile)}]] (Line ${change.lineNumber + 1})`
-            ).join('\n'),
-            '',
-            '---\n'
-        ].join('\n');
-
-        if (!(logFile instanceof TFile)) {
-            // Create log file if it doesn't exist
-            await this.app.vault.create(this.settings.logFilePath, logEntry);
-        } else {
-            // Append to existing log file
-            const currentContent = await this.app.vault.read(logFile);
-            await this.app.vault.modify(logFile, logEntry + currentContent);
+    public async writeBatchToLog(): Promise<void> {
+        if (this.currentBatchLog && this.settings.enableChangeLogging) {
+            await writeBatchToLog(this.app, this.settings.logFilePath, this.currentBatchLog);
         }
-
-        // Clear the current batch
-        this.currentBatchLog = null;
+        this.clearBatchLog();
     }
 
-    async showConfirmationDialog(matches: LinkMatch[], newFileName: string): Promise<boolean> {
-        return new Promise((resolve) => {
-            const modal = new Modal(this.app);
-            modal.titleEl.setText('Confirm Link Updates');
-
-            const content = modal.contentEl;
-            content.empty();
-
-            content.createEl('p', {
-                text: `You are about to update ${matches.length} block reference${matches.length > 1 ? 's' : ''} to point to "${newFileName}".`,
-                attr: { style: 'margin-bottom: 12px;' }
-            });
-
-            if (matches.length > 0) {
-                const list = content.createEl('div', {
-                    cls: 'link-maintainer-changes-list',
-                    attr: { style: 'max-height: 200px; overflow-y: auto; margin-bottom: 12px; padding: 8px; border: 1px solid var(--background-modifier-border); border-radius: 4px;' }
-                });
-
-                matches.forEach((match, index) => {
-                    const item = list.createEl('div', {
-                        attr: { style: 'margin-bottom: 8px; font-size: 0.9em;' }
-                    });
-                    item.createEl('div', {
-                        text: `${index + 1}. In file: ${match.file}`,
-                        attr: { style: 'color: var(--text-muted);' }
-                    });
-                    item.createEl('div', {
-                        text: match.lineContent,
-                        attr: { style: 'font-family: monospace; white-space: pre-wrap; margin-top: 4px;' }
-                    });
-                });
-            }
-
-            const warningEl = content.createEl('p', {
-                cls: 'link-maintainer-warning',
-                text: 'This action cannot be automatically undone. Changes will be logged if logging is enabled.',
-                attr: { style: 'color: var(--text-warning); margin-bottom: 12px;' }
-            });
-
-            // Buttons container
-            const buttonContainer = content.createEl('div', {
-                attr: { style: 'display: flex; justify-content: flex-end; gap: 8px;' }
-            });
-
-            // Cancel button
-            buttonContainer.createEl('button', {
-                text: 'Cancel',
-                attr: { style: 'padding: 4px 12px;' }
-            }).onclick = () => {
-                modal.close();
-                resolve(false);
-            };
-
-            // Confirm button
-            const confirmButton = buttonContainer.createEl('button', {
-                cls: 'mod-cta',
-                text: 'Confirm Updates',
-                attr: { style: 'padding: 4px 12px;' }
-            });
-            confirmButton.onclick = () => {
-                modal.close();
-                resolve(true);
-            };
-
-            modal.open();
-        });
+    async showConfirmationDialog(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType): Promise<void> {
+        const dialog = new ConfirmationDialog(this.app, matches, newFileName);
+        const confirmed = await dialog.showDialog();
+        if (!confirmed) {
+            throw new Error('User cancelled operation');
+        }
     }
 
     async loadSettings() {
@@ -325,7 +247,12 @@ export default class LinkMaintainer extends Plugin {
         return matches;
     }
 
-    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+    async replaceLinks(
+        matches: LinkMatch[],
+        newFileName: string,
+        reference: string | null,
+        linkType: LinkType
+    ): Promise<void> {
         // Initialize batch log only if we have both required parameters
         if (reference && reference.trim() && newFileName && newFileName.trim()) {
             this.initBatchLog(reference, newFileName);
@@ -333,11 +260,7 @@ export default class LinkMaintainer extends Plugin {
 
         // If confirmation dialog is enabled, show it
         if (this.settings.showConfirmationDialog) {
-            const confirmed = await this.showConfirmationDialog(matches, newFileName);
-            if (!confirmed) {
-                this.currentBatchLog = null; // Clear batch log if cancelled
-                return;
-            }
+            await this.showConfirmationDialog(matches, newFileName, reference, linkType);
         }
 
         // Iterate over each match
@@ -383,6 +306,10 @@ export default class LinkMaintainer extends Plugin {
 
         // Write batch log to file
         await this.writeBatchToLog();
+    }
+
+    clearBatchLog(): void {
+        this.currentBatchLog = null;
     }
 
     addRibbonIcon(icon: string, title: string, callback: (evt: MouseEvent) => void) {

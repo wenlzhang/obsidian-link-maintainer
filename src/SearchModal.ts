@@ -2,17 +2,16 @@ import { App, Modal, Notice, TextComponent } from 'obsidian';
 import { LinkType } from './types';
 
 export class SearchModal extends Modal {
-    oldFileName: string;
-    newFileName: string;
+    oldFileName: string = '';
+    newFileName: string = '';
     blockId: string | null = null;
     headingText: string | null = null;
-    linkType: LinkType;
+    linkType: LinkType = LinkType.NOTE;
     onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void;
 
     constructor(app: App, onSubmit: (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => void) {
         super(app);
         this.onSubmit = onSubmit;
-        this.linkType = LinkType.NOTE; // Default link type
     }
 
     onOpen() {
