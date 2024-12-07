@@ -70,11 +70,12 @@ export default class LinkMaintainer extends Plugin {
 
         this.addSettingTab(new LinkMaintainerSettingTab(this.app, this));
 
-        this.addCommand({
-            id: 'link-maintainer-update-references',
-            name: 'Update link references',
-            callback: () => this.showSearchModal(),
-        });
+        // Temporarily hide the general link update command
+        // this.addCommand({
+        //     id: 'link-maintainer-update-references',
+        //     name: 'Update link references',
+        //     callback: () => this.showSearchModal(),
+        // });
 
         this.addCommand({
             id: 'update-block-references',
