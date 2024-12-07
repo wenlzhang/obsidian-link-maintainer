@@ -1,5 +1,5 @@
 import { App, TFile } from 'obsidian';
-import { BatchChangeLog, ChangeEntry, LinkMaintainerSettings } from './main';
+import { BatchChangeLog, ChangeEntry, LinkMaintainerSettings } from './types';
 import { getCleanBlockRef } from './utils';
 
 export async function writeBatchToLog(

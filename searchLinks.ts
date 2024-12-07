@@ -1,5 +1,5 @@
-import { App } from 'obsidian';
-import { LinkMatch, LinkType } from './main';
+import { App, TFile } from 'obsidian';
+import { LinkMatch, LinkType } from './types';
 import { ResultsModal } from './ResultsModal';
 
 export class SearchLinks {

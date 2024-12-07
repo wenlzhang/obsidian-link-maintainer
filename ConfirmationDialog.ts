@@ -1,5 +1,5 @@
 import { App, Modal } from 'obsidian';
-import { LinkMatch } from './main';
+import { LinkMatch } from './types';
 
 export async function showConfirmationDialog(app: App, matches: LinkMatch[], newFileName: string): Promise<boolean> {
     return new Promise((resolve) => {

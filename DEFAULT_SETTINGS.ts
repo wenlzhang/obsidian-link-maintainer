@@ -1,4 +1,4 @@
-import { LinkMaintainerSettings } from "main";
+import { LinkMaintainerSettings } from "./types";
 
 export const DEFAULT_SETTINGS: LinkMaintainerSettings = {
     replaceExistingBlockLinks: false,

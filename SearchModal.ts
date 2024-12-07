@@ -1,5 +1,5 @@
 import { App, Modal, Notice, TextComponent } from 'obsidian';
-import { LinkType } from './main';
+import { LinkType } from './types';
 
 export class SearchModal extends Modal {
     oldFileName: string;

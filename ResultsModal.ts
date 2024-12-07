@@ -1,5 +1,5 @@
 import { App, Modal, TFile, MarkdownView } from 'obsidian';
-import { LinkMatch, LinkType } from './main';
+import { LinkMatch, LinkType } from './types';
 
 export class ResultsModal extends Modal {
     matches: LinkMatch[];

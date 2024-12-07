@@ -1,5 +1,5 @@
 import { TFile } from 'obsidian';
-import { LinkMatch, LinkType, BatchChangeLog } from './main';
+import { LinkMatch, LinkType, BatchChangeLog } from './types';
 
 export interface LinkReplacerDependencies {
     plugin: any;
