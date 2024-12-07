@@ -18,7 +18,18 @@ if (!existsSync(buildDir)) {
     mkdirSync(buildDir);
 }
 
-esbuild.build({
+// Function to copy files to build directory
+const copyToBuild = () => {
+    copyFileSync('manifest.json', join(buildDir, 'manifest.json'));
+    if (existsSync('styles.css')) {
+        copyFileSync('styles.css', join(buildDir, 'styles.css'));
+    }
+};
+
+// Initial copy
+copyToBuild();
+
+const ctx = await esbuild.context({
     banner: {
         js: banner,
     },
@@ -41,16 +52,17 @@ esbuild.build({
         ...builtins
     ],
     format: 'cjs',
-    watch: !prod,
     target: 'es2018',
     logLevel: 'info',
     sourcemap: prod ? false : 'inline',
     treeShaking: true,
-    outfile: 'build/main.js',
-}).then(() => {
-    // Copy manifest.json and styles.css to build directory
-    copyFileSync('manifest.json', join(buildDir, 'manifest.json'));
-    if (existsSync('styles.css')) {
-        copyFileSync('styles.css', join(buildDir, 'styles.css'));
-    }
-}).catch(() => process.exit(1));
+    outfile: join(buildDir, 'main.js'),
+});
+
+if (prod) {
+    await ctx.rebuild();
+    ctx.dispose();
+} else {
+    await ctx.watch();
+    console.log('👀 watching for changes...');
+}
