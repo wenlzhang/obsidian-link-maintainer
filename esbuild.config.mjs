@@ -54,6 +54,10 @@ try {
         treeShaking: true,
         outfile: join(buildDir, 'main.js'),
         minify: prod,
+        platform: 'node',
+        mainFields: ['browser', 'module', 'main'],
+        write: true,
+        allowOverwrite: true,
     });
 } catch (error) {
     console.error('Build failed:', error);
