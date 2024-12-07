@@ -1,12 +1,15 @@
-import { TFile, Notice } from 'obsidian';
-import { LinkMatch, LinkType, BatchChangeLog, ChangeEntry } from './types';
-import { getNoteName } from './utils';
+import { TFile, Notice } from "obsidian";
+import { LinkMatch, LinkType, BatchChangeLog, ChangeEntry } from "./types";
+import { getNoteName } from "./utils";
 
 export interface LinkReplacerDependencies {
     plugin: any;
     settings: { showConfirmationDialog: boolean };
     initBatchLog: (blockId: string, newFileName: string) => void;
-    showConfirmationDialog: (matches: LinkMatch[], newFileName: string) => Promise<boolean>;
+    showConfirmationDialog: (
+        matches: LinkMatch[],
+        newFileName: string,
+    ) => Promise<boolean>;
     logChange: (change: ChangeEntry) => Promise<void>;
     writeBatchToLog: () => Promise<void>;
     clearBatchLog: () => void;
@@ -15,7 +18,12 @@ export interface LinkReplacerDependencies {
 export class LinkReplacer {
     constructor(private deps: LinkReplacerDependencies) {}
 
-    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
+    async replaceLinks(
+        matches: LinkMatch[],
+        newFileName: string,
+        reference: string | null,
+        linkType: LinkType,
+    ) {
         // Initialize batch log
         if (reference) {
             this.deps.initBatchLog(reference, newFileName);
@@ -23,7 +31,10 @@ export class LinkReplacer {
 
         // If confirmation dialog is enabled, show it
         if (this.deps.settings.showConfirmationDialog) {
-            const confirmed = await this.deps.showConfirmationDialog(matches, newFileName);
+            const confirmed = await this.deps.showConfirmationDialog(
+                matches,
+                newFileName,
+            );
             if (!confirmed) {
                 this.deps.clearBatchLog(); // Clear batch log if cancelled
                 return;
@@ -34,7 +45,7 @@ export class LinkReplacer {
 
         // Group matches by file to avoid multiple reads/writes to the same file
         const matchesByFile = new Map<string, LinkMatch[]>();
-        matches.forEach(match => {
+        matches.forEach((match) => {
             const fileMatches = matchesByFile.get(match.file) || [];
             fileMatches.push(match);
             matchesByFile.set(match.file, fileMatches);
@@ -42,21 +53,22 @@ export class LinkReplacer {
 
         // Process each file
         for (const [filePath, fileMatches] of matchesByFile) {
-            const file = this.deps.plugin.app.vault.getAbstractFileByPath(filePath);
+            const file =
+                this.deps.plugin.app.vault.getAbstractFileByPath(filePath);
             if (!(file instanceof TFile)) {
                 continue;
             }
 
             const content = await this.deps.plugin.app.vault.read(file);
 
-            if (file.extension === 'canvas') {
+            if (file.extension === "canvas") {
                 const { modified, updateCount } = await this.updateCanvasFile(
                     file,
                     content,
                     fileMatches,
                     newFileName,
                     reference,
-                    filePath
+                    filePath,
                 );
                 if (modified) {
                     totalUpdatedCount += updateCount;
@@ -68,7 +80,7 @@ export class LinkReplacer {
                     fileMatches,
                     newFileName,
                     reference,
-                    filePath
+                    filePath,
                 );
                 if (modified) {
                     totalUpdatedCount += updateCount;
@@ -79,9 +91,11 @@ export class LinkReplacer {
         // Write batch log if there were any updates
         if (totalUpdatedCount > 0) {
             await this.deps.writeBatchToLog();
-            new Notice(`Successfully updated ${totalUpdatedCount} link${totalUpdatedCount === 1 ? '' : 's'} to "${getNoteName(newFileName)}"`);
+            new Notice(
+                `Successfully updated ${totalUpdatedCount} link${totalUpdatedCount === 1 ? "" : "s"} to "${getNoteName(newFileName)}"`,
+            );
         } else {
-            new Notice('No links needed updating');
+            new Notice("No links needed updating");
         }
     }
 
@@ -91,7 +105,7 @@ export class LinkReplacer {
         matches: LinkMatch[],
         newFileName: string,
         reference: string | null,
-        filePath: string
+        filePath: string,
     ): Promise<{ modified: boolean; updateCount: number }> {
         let modified = false;
         let updateCount = 0;
@@ -100,10 +114,12 @@ export class LinkReplacer {
             const canvasData = JSON.parse(content);
             if (!canvasData.nodes) return { modified, updateCount };
 
-            matches.forEach(match => {
+            matches.forEach((match) => {
                 if (!match.isCanvasNode || !match.nodeId) return;
 
-                const node = canvasData.nodes.find((n: any) => n.id === match.nodeId);
+                const node = canvasData.nodes.find(
+                    (n: any) => n.id === match.nodeId,
+                );
                 if (!node?.text) return;
 
                 const { text: newText, updated } = this.updateNodeText(
@@ -111,7 +127,7 @@ export class LinkReplacer {
                     match,
                     newFileName,
                     reference,
-                    filePath
+                    filePath,
                 );
 
                 if (updated) {
@@ -122,7 +138,10 @@ export class LinkReplacer {
             });
 
             if (modified) {
-                await this.deps.plugin.app.vault.modify(file, JSON.stringify(canvasData, null, 2));
+                await this.deps.plugin.app.vault.modify(
+                    file,
+                    JSON.stringify(canvasData, null, 2),
+                );
             }
         } catch (error) {
             console.error(`Error updating canvas file ${filePath}:`, error);
@@ -137,20 +156,20 @@ export class LinkReplacer {
         matches: LinkMatch[],
         newFileName: string,
         reference: string | null,
-        filePath: string
+        filePath: string,
     ): Promise<{ modified: boolean; updateCount: number }> {
         let modified = false;
         let updateCount = 0;
-        const lines = content.split('\n');
+        const lines = content.split("\n");
 
-        matches.forEach(match => {
+        matches.forEach((match) => {
             const line = lines[match.lineNumber];
             const { text: newLine, updated } = this.updateNodeText(
                 line,
                 match,
                 newFileName,
                 reference,
-                filePath
+                filePath,
             );
 
             if (updated) {
@@ -161,7 +180,7 @@ export class LinkReplacer {
         });
 
         if (modified) {
-            await this.deps.plugin.app.vault.modify(file, lines.join('\n'));
+            await this.deps.plugin.app.vault.modify(file, lines.join("\n"));
         }
 
         return { modified, updateCount };
@@ -172,21 +191,33 @@ export class LinkReplacer {
         match: LinkMatch,
         newFileName: string,
         reference: string | null,
-        filePath: string
+        filePath: string,
     ): { text: string; updated: boolean } {
         // Check if already updated
-        const existingLinkPattern = new RegExp(`\\[\\[${newFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
+        const existingLinkPattern = new RegExp(
+            `\\[\\[${newFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`,
+        );
         if (existingLinkPattern.test(text)) {
             return { text, updated: false };
         }
 
         let newText: string;
         if (match.oldFileName) {
-            const oldLinkPattern = new RegExp(`\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`);
-            newText = text.replace(oldLinkPattern, `[[${newFileName}#^${reference}]]`);
+            const oldLinkPattern = new RegExp(
+                `\\[\\[${match.oldFileName}#\\^${reference}(?:\\|[^\\]]+)?\\]\\]`,
+            );
+            newText = text.replace(
+                oldLinkPattern,
+                `[[${newFileName}#^${reference}]]`,
+            );
         } else {
-            const blockIdPattern = new RegExp(`\\^${reference}(?=[\\s\\]\\n]|$)`);
-            newText = text.replace(blockIdPattern, `[[${newFileName}#^${reference}]]`);
+            const blockIdPattern = new RegExp(
+                `\\^${reference}(?=[\\s\\]\\n]|$)`,
+            );
+            newText = text.replace(
+                blockIdPattern,
+                `[[${newFileName}#^${reference}]]`,
+            );
         }
 
         if (newText !== text) {
@@ -195,12 +226,12 @@ export class LinkReplacer {
                 originalContent: text,
                 newContent: newText,
                 lineNumber: match.lineNumber,
-                originalFile: filePath
+                originalFile: filePath,
             };
 
             // Just log the change entry, not the whole batch
             this.deps.logChange(changeEntry);
-            
+
             return { text: newText, updated: true };
         }
 

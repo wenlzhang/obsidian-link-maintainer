@@ -29,7 +29,7 @@ const copyToBuild = () => {
 // Initial copy
 copyToBuild();
 
-const ctx = await esbuild.context({
+const buildOptions = {
     banner: {
         js: banner,
     },
@@ -57,12 +57,17 @@ const ctx = await esbuild.context({
     sourcemap: prod ? false : 'inline',
     treeShaking: true,
     outfile: join(buildDir, 'main.js'),
-});
+};
 
 if (prod) {
-    await ctx.rebuild();
-    ctx.dispose();
+    await esbuild.build(buildOptions);
 } else {
-    await ctx.watch();
+    buildOptions.watch = {
+        onRebuild(error, result) {
+            if (error) console.error('watch build failed:', error);
+            else console.log('watch build succeeded');
+        },
+    };
+    const result = await esbuild.build(buildOptions);
     console.log('👀 watching for changes...');
 }

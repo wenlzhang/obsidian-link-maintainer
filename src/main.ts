@@ -1,14 +1,21 @@
-import { App, Plugin, Notice, TFile } from 'obsidian';
-import { getCleanBlockRef, extractBlockInfo } from './utils';
-import { LinkMaintainerSettingTab } from './LinkMaintainerSettingTab';
-import { DEFAULT_SETTINGS } from './DEFAULT_SETTINGS';
-import { SearchModal } from './SearchModal';
-import { SearchLinks } from './searchLinks';
-import { BlockReferenceManager } from './BlockReferenceManager';
-import { LinkReplacer } from './LinkReplacer';
-import { showConfirmationDialog } from './ConfirmationDialog';
-import { writeBatchToLog } from './BatchLogger';
-import { LinkMatch, ExtractedInfo, LinkType, LinkMaintainerSettings, ChangeEntry, BatchChangeLog } from './types';
+import { App, Plugin, Notice, TFile } from "obsidian";
+import { getCleanBlockRef, extractBlockInfo } from "./utils";
+import { LinkMaintainerSettingTab } from "./LinkMaintainerSettingTab";
+import { DEFAULT_SETTINGS } from "./DEFAULT_SETTINGS";
+import { SearchModal } from "./SearchModal";
+import { SearchLinks } from "./searchLinks";
+import { BlockReferenceManager } from "./BlockReferenceManager";
+import { LinkReplacer } from "./LinkReplacer";
+import { showConfirmationDialog } from "./ConfirmationDialog";
+import { writeBatchToLog } from "./BatchLogger";
+import {
+    LinkMatch,
+    ExtractedInfo,
+    LinkType,
+    LinkMaintainerSettings,
+    ChangeEntry,
+    BatchChangeLog,
+} from "./types";
 
 export default class LinkMaintainer extends Plugin {
     settings: LinkMaintainerSettings;
@@ -23,7 +30,7 @@ export default class LinkMaintainer extends Plugin {
 
     async logChange(change: ChangeEntry): Promise<void> {
         if (!this.settings.enableChangeLogging) return;
-        
+
         if (this.currentBatchLog) {
             this.currentBatchLog.changes.push(change);
         }
@@ -35,7 +42,7 @@ export default class LinkMaintainer extends Plugin {
             blockId: blockId,
             newFileName: newFileName,
             description: `Block reference update: ^${blockId} → ${newFileName}`,
-            changes: []
+            changes: [],
         };
     }
 
@@ -44,13 +51,16 @@ export default class LinkMaintainer extends Plugin {
         this.currentBatchLog = null;
     }
 
-    async showConfirmationDialog(matches: LinkMatch[], newFileName: string): Promise<boolean> {
+    async showConfirmationDialog(
+        matches: LinkMatch[],
+        newFileName: string,
+    ): Promise<boolean> {
         return showConfirmationDialog(this.app, matches, newFileName);
     }
 
     async onload() {
         await this.loadSettings();
-        
+
         // Initialize helpers after settings are loaded
         this.linkReplacer = new LinkReplacer({
             plugin: this,
@@ -59,13 +69,18 @@ export default class LinkMaintainer extends Plugin {
             showConfirmationDialog: this.showConfirmationDialog.bind(this),
             logChange: this.logChange.bind(this),
             writeBatchToLog: this.writeBatchToLog.bind(this),
-            clearBatchLog: () => { this.currentBatchLog = null; }
+            clearBatchLog: () => {
+                this.currentBatchLog = null;
+            },
         });
-        this.searchLinksHelper = new SearchLinks(this.app, this.linkReplacer.replaceLinks.bind(this.linkReplacer));
+        this.searchLinksHelper = new SearchLinks(
+            this.app,
+            this.linkReplacer.replaceLinks.bind(this.linkReplacer),
+        );
         this.blockReferenceManager = new BlockReferenceManager(
             this.app,
             this.linkReplacer.replaceLinks.bind(this.linkReplacer),
-            this.settings.replaceExistingBlockLinks
+            this.settings.replaceExistingBlockLinks,
         );
 
         this.addSettingTab(new LinkMaintainerSettingTab(this.app, this));
@@ -78,34 +93,41 @@ export default class LinkMaintainer extends Plugin {
         // });
 
         this.addCommand({
-            id: 'update-block-references',
-            name: 'Update block references from selection',
+            id: "update-block-references",
+            name: "Update block references from selection",
             editorCallback: (editor) => {
                 const selection = editor.getSelection();
                 if (!selection) {
-                    new Notice('Please select some text first');
+                    new Notice("Please select some text first");
                     return;
                 }
 
                 const info = extractBlockInfo(selection, this.app);
                 if (!info) {
-                    new Notice('No valid block ID found in selection');
+                    new Notice("No valid block ID found in selection");
                     return;
                 }
 
                 const activeFile = this.app.workspace.getActiveFile();
                 if (!activeFile) {
-                    new Notice('No active file');
+                    new Notice("No active file");
                     return;
                 }
 
-                this.searchAndUpdateBlockReferences(info.blockId, activeFile.basename);
-            }
+                this.searchAndUpdateBlockReferences(
+                    info.blockId,
+                    activeFile.basename,
+                );
+            },
         });
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = Object.assign(
+            {},
+            DEFAULT_SETTINGS,
+            await this.loadData(),
+        );
     }
 
     async saveSettings() {
@@ -114,22 +136,50 @@ export default class LinkMaintainer extends Plugin {
 
     showSearchModal() {
         new SearchModal(
-            this.app, 
-            (oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) => {
+            this.app,
+            (
+                oldFileName: string,
+                newFileName: string,
+                reference: string | null,
+                linkType: LinkType,
+            ) => {
                 this.searchLinks(oldFileName, newFileName, reference, linkType);
-            }
+            },
         ).open();
     }
 
-    async searchLinks(oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) {
-        return this.searchLinksHelper.searchLinks(oldFileName, newFileName, reference, linkType);
+    async searchLinks(
+        oldFileName: string,
+        newFileName: string,
+        reference: string | null,
+        linkType: LinkType,
+    ) {
+        return this.searchLinksHelper.searchLinks(
+            oldFileName,
+            newFileName,
+            reference,
+            linkType,
+        );
     }
 
     async searchAndUpdateBlockReferences(blockId: string, newFileName: string) {
-        return this.blockReferenceManager.searchAndUpdateBlockReferences(blockId, newFileName);
+        return this.blockReferenceManager.searchAndUpdateBlockReferences(
+            blockId,
+            newFileName,
+        );
     }
 
-    async replaceLinks(matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) {
-        return this.linkReplacer.replaceLinks(matches, newFileName, reference, linkType);
+    async replaceLinks(
+        matches: LinkMatch[],
+        newFileName: string,
+        reference: string | null,
+        linkType: LinkType,
+    ) {
+        return this.linkReplacer.replaceLinks(
+            matches,
+            newFileName,
+            reference,
+            linkType,
+        );
     }
 }

@@ -18,8 +18,10 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
 
         // Replace existing block links setting
         new Setting(containerEl)
-            .setName('Force update all block references')
-            .setDesc('Update all block references, even if they point to valid blocks in other files. By default (off), only broken or invalid block references will be updated.')
+            .setName("Force update all block references")
+            .setDesc(
+                "Update all block references, even if they point to valid blocks in other files. By default (off), only broken or invalid block references will be updated.",
+            )
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.replaceExistingBlockLinks)
@@ -31,8 +33,10 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
 
         // Show confirmation dialog setting
         new Setting(containerEl)
-            .setName('Show confirmation dialog')
-            .setDesc('Show a dialog to review and confirm changes before updating any links')
+            .setName("Show confirmation dialog")
+            .setDesc(
+                "Show a dialog to review and confirm changes before updating any links",
+            )
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.showConfirmationDialog)
@@ -47,8 +51,8 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
 
         // Enable change logging setting
         new Setting(containerEl)
-            .setName('Enable change logging')
-            .setDesc('Keep a record of all link updates for future reference')
+            .setName("Enable change logging")
+            .setDesc("Keep a record of all link updates for future reference")
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.enableChangeLogging)
@@ -61,15 +65,15 @@ export class LinkMaintainerSettingTab extends PluginSettingTab {
         // Log file path setting (only show if logging is enabled)
         if (this.plugin.settings.enableChangeLogging) {
             new Setting(containerEl)
-                .setName('Log file path')
-                .setDesc('Path to the log file (relative to vault root)')
+                .setName("Log file path")
+                .setDesc("Path to the log file (relative to vault root)")
                 .addText((text) => {
-                    text
-                        .setValue(this.plugin.settings.logFilePath)
-                        .onChange(async (value) => {
+                    text.setValue(this.plugin.settings.logFilePath).onChange(
+                        async (value) => {
                             this.plugin.settings.logFilePath = value;
                             await this.plugin.saveSettings();
-                        });
+                        },
+                    );
                 });
         }
     }

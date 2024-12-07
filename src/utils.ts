@@ -1,5 +1,5 @@
 // Regular expressions for matching different types of links and references
-import { App } from 'obsidian';
+import { App } from "obsidian";
 
 export const REGEX = {
     // Match standalone block ID ^blockid
@@ -7,7 +7,7 @@ export const REGEX = {
     // Match file with block ID filename#^blockid
     FILE_BLOCK_ID: /([^#\^]+)#\^([a-zA-Z0-9-]+)$/,
     // Match link content inside [[ up to # or |
-    LINK_CONTENT: /\[\[([^\]#|]+)/
+    LINK_CONTENT: /\[\[([^\]#|]+)/,
 };
 
 /**
@@ -16,11 +16,11 @@ export const REGEX = {
  * @returns A clean note name without path or extension
  */
 export function getNoteName(filePath: string | undefined | null): string {
-    if (!filePath) return 'Unknown File';
+    if (!filePath) return "Unknown File";
     // Remove folders and extension, get just the note name
-    const parts = filePath.split('/');
+    const parts = filePath.split("/");
     const fileName = parts.length > 0 ? parts[parts.length - 1] : filePath;
-    return fileName.replace(/\.md$/, '');
+    return fileName.replace(/\.md$/, "");
 }
 
 /**
@@ -53,10 +53,10 @@ export function extractBlockInfo(text: string, app: App): ExtractedInfo | null {
     if (match) {
         return {
             fileName: match[1],
-            blockId: match[2]
+            blockId: match[2],
         };
     }
-    
+
     // Then try to match standalone block ID
     match = text.match(REGEX.BLOCK_ID);
     if (match) {
@@ -65,10 +65,10 @@ export function extractBlockInfo(text: string, app: App): ExtractedInfo | null {
         if (activeFile) {
             return {
                 fileName: getNoteName(activeFile.path),
-                blockId: match[1]
+                blockId: match[1],
             };
         }
     }
-    
+
     return null;
 }

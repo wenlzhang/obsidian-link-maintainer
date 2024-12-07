@@ -1,16 +1,34 @@
-import { App, TFile } from 'obsidian';
-import { LinkMatch, LinkType } from './types';
-import { ResultsModal } from './ResultsModal';
+import { App, TFile } from "obsidian";
+import { LinkMatch, LinkType } from "./types";
+import { ResultsModal } from "./ResultsModal";
 
 export class SearchLinks {
-    constructor(private app: App, private replaceLinks: (matches: LinkMatch[], newFileName: string, reference: string | null, linkType: LinkType) => void) {}
+    constructor(
+        private app: App,
+        private replaceLinks: (
+            matches: LinkMatch[],
+            newFileName: string,
+            reference: string | null,
+            linkType: LinkType,
+        ) => void,
+    ) {}
 
-    async searchLinks(oldFileName: string, newFileName: string, reference: string | null, linkType: LinkType) {
+    async searchLinks(
+        oldFileName: string,
+        newFileName: string,
+        reference: string | null,
+        linkType: LinkType,
+    ) {
         const matches: LinkMatch[] = [];
         const files = this.app.vault.getMarkdownFiles();
 
-        const escapedOldFileName = oldFileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const escapedReference = reference ? reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+        const escapedOldFileName = oldFileName.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&",
+        );
+        const escapedReference = reference
+            ? reference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            : "";
 
         let pattern: string;
         switch (linkType) {
@@ -24,11 +42,11 @@ export class SearchLinks {
                 pattern = `(!?\\[\\[)${escapedOldFileName}(\\|[^\\]]+)?\\]\\]`;
         }
 
-        const regex = new RegExp(pattern, 'g');
+        const regex = new RegExp(pattern, "g");
 
         for (const file of files) {
             const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
+            const lines = content.split("\n");
 
             lines.forEach((line, index) => {
                 let match;
@@ -38,21 +56,21 @@ export class SearchLinks {
                         lineContent: line,
                         lineNumber: index,
                         linkText: match[0],
-                        oldFileName: null
+                        oldFileName: null,
                     });
                 }
             });
         }
 
         new ResultsModal(
-            this.app, 
-            matches, 
+            this.app,
+            matches,
             newFileName,
             reference,
             linkType,
             (matches, newFileName, reference, linkType) => {
                 this.replaceLinks(matches, newFileName, reference, linkType);
-            }
+            },
         ).open();
     }
 }

@@ -14,9 +14,9 @@ export interface ExtractedInfo {
 }
 
 export enum LinkType {
-    NOTE = 'note',
-    BLOCK = 'block',
-    HEADING = 'heading'
+    NOTE = "note",
+    BLOCK = "block",
+    HEADING = "heading",
 }
 
 export interface LinkMaintainerSettings {
