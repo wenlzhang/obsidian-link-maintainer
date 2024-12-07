@@ -1,14 +1,14 @@
-{ 
-  "id": "obsidian-link-maintainer",
-  "name": "Link Maintainer",
-  "version": "0.0.1",
-  "minAppVersion": "1.0.0",
-  "description": "Help maintain and update links in Obsidian notes when files are renamed.",
-  "author": "wenlzhang",
-  "authorUrl": "https://github.com/wenlzhang",
+{
+	"id": "obsidian-link-maintainer",
+	"name": "Link Maintainer",
+	"version": "0.1.0",
+	"minAppVersion": "1.0.0",
+	"description": "Help maintain and update links in Obsidian notes when files are renamed.",
+	"author": "wenlzhang",
+	"authorUrl": "https://github.com/wenlzhang",
 	"fundingUrl": {
-      "Buy Me a Coffee": "https://ko-fi.com/f84556"
-    },
+		"Buy Me a Coffee": "https://ko-fi.com/f84556"
+	},
 	"isDesktopOnly": false,
-  "css": "styles.css"
+	"css": "styles.css"
 }
