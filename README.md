@@ -55,6 +55,16 @@ This is exactly why Link Maintainer exists. With this plugin, you can:
 
 No more manual searching and replacing. No more broken references. Just smooth, reliable link maintenance that lets you focus on organizing your knowledge the way you want.
 
+## The Story Behind Link Maintainer
+
+I often take long notes in my PTKM system for a simple reason: longer notes help reduce the overall number of notes in the system, making it much easier to maintain the entire knowledge base. Imagine managing 100,000 notes versus 10,000 notes—roughly the number I have now. For me, the former feels overwhelming. (To learn more, feel free to read my take on [[Long notes or atomic notes]].)
+
+Later, I might want to convert a section of text into a separate note to highlight its importance. This makes it easier to refer to that note, as the title will clearly convey the topic. However, when I split a piece of text into a separate note, the block IDs and block links that refer to that text may become invalid.
+
+This is why I need an efficient way to update these outdated block links. I am developing this tool to help me achieve this goal.
+
+This is how this tool was born, and I hope you enjoy using it!
+
 ## Documentation
 
 📚 **[View Full Documentation](https://exp.ptkm.net/obsidian-link-maintainer)**
