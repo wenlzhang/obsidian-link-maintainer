@@ -1,9 +1,8 @@
-import { App, Plugin, Modal, TextComponent, Notice, DropdownComponent, TFile, Editor, MarkdownView } from 'obsidian';
+import { App, Plugin, Notice, TFile } from 'obsidian';
 import { getCleanBlockRef, extractBlockInfo } from './utils';
 import { LinkMaintainerSettingTab } from 'LinkMaintainerSettingTab';
 import { DEFAULT_SETTINGS } from 'DEFAULT_SETTINGS';
 import { SearchModal } from './SearchModal';
-import { ResultsModal } from './ResultsModal';
 import { SearchLinks } from './searchLinks';
 import { BlockReferenceManager } from './BlockReferenceManager';
 import { LinkReplacer } from './LinkReplacer';

@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App } from 'obsidian';
 import { LinkMatch, LinkType } from './main';
 import { ResultsModal } from './ResultsModal';
 

@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
 import { LinkMatch, LinkType, LinkChangeLog } from './main';
 
 export interface LinkReplacerDependencies {
