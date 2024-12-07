@@ -7,41 +7,38 @@ An [Obsidian](https://obsidian.md/) plugin that helps you maintain various types
 ## Features
 
 ### Comprehensive Link Support
+
 - **Update three types of Obsidian links**:
   - Note links (`[[filename]]`)
   - Heading links (`[[filename#Heading]]`)
   - Block references (`[[filename#^blockid]]`)
 - **Canvas Integration**:
-  - Full support for links in canvas files
-  - Maintains canvas node relationships
   - Updates block references within canvas nodes
 
 ### Smart Link Management
+
 - **Smart block reference handling**:
   - Update block references directly from selected text
   - Option to replace or preserve existing block links
+    - Default safe mode: only updates broken or invalid links
+    - Optional force update mode for complete link consolidation
   - Maintains block IDs while updating file paths
-  - Default safe mode: only updates broken or invalid links
-  - Optional force update mode for complete link consolidation
 
 ### Safety and Reliability
+
 - **Safe updates**:
   - Preview all changes before applying
   - Confirmation dialog for reviewing updates
-  - Changes can be reviewed and confirmed in batches
   - Clear display of affected files and locations
 - **Change tracking**:
   - Detailed logging of all link updates
-  - Track original and new link locations
   - Maintain history of all modifications
-  - Easy-to-read markdown format
-  - Grouped by update sessions
-  - Includes file paths and line numbers (where applicable)
 
-## Usage
+## Use Cases
 
 ### When You Split Notes
-If you have a large note that you split into smaller notes, links in other notes might become invalid. This plugin helps you update those references to point to the new location, with built-in safeguards to prevent accidental changes.
+
+If you have a large note that you split into smaller notes, block references in other notes might become invalid. This plugin helps you update those references to point to the new location, with built-in safeguards to prevent accidental changes.
 
 ### When You Reorganize Notes
 
@@ -61,9 +58,9 @@ The plugin provides two commands to help you maintain links in your vault:
    - You'll need to provide:
      - Old file name (for note/heading links)
      - New file name
-     - Heading or block reference (if applicable)
+     - Heading or block ID (if applicable)
 2. **Update block references from selection**
-   - Select text containing a block reference in your note
+   - Select text containing a block ID in your note
    - Run the command through Command Palette
    - The plugin will update all references to that block
 
@@ -73,7 +70,7 @@ The plugin provides two commands to help you maintain links in your vault:
    - Open Command Palette (`Cmd/Ctrl + P`)
    - Choose the appropriate command:
      - "Update link references" for any type of link
-     - "Update block references from selection" for block references
+     - "Update block references from selection" for block IDs
    - Enter the required information in the dialog
 2. **Review Changes**:
    - The plugin shows you all found references
@@ -111,22 +108,20 @@ After:  [[newNote#^abc123]]
 ### Smart Block Reference Updates
 
 #### Default Behavior (Safe Mode)
+
 By default, the plugin only updates block references that are "broken" or no longer valid. This means:
+
 - If a block reference exists in multiple files, links pointing to valid locations won't be changed
 - Only links pointing to locations where the block no longer exists will be updated
 - This prevents accidentally breaking valid references when blocks are duplicated across notes
 
 #### Force Update Mode
+
 You can enable "Force Update All Block References" in settings to change this behavior:
+
 - All block references will be updated to point to the new location
 - This is useful when you want to ensure all references point to a specific instance of a block
 - Helpful when consolidating or reorganizing notes where blocks might exist in multiple places
-
-
-When reorganizing your vault structure or renaming files, you can easily update all references while maintaining link integrity:
-1. Preview changes before applying
-2. Confirm updates through a clear dialog
-3. Track all modifications in the change log
 
 ## Settings
 
@@ -145,12 +140,14 @@ The plugin provides several settings to customize its behavior:
     - Batch operation details
 
 ### Link Updates
+
 - **Force update all block references**: Choose between safe mode (default) and force update mode
   - Safe mode: Only updates broken or invalid links
   - Force mode: Updates all references to point to the new location
 - **Show confirmation dialog**: Review and confirm changes before they're applied
 
 ### Change Tracking
+
 - **Enable change logging**: Keep a detailed record of all updates
 - **Log file path**: Customize where change logs are stored
 
@@ -174,6 +171,7 @@ The plugin provides several settings to customize its behavior:
 ```
 
 ### Canvas Updates
+
 ```markdown
 // Canvas nodes are fully supported
 - Updates links within canvas nodes
@@ -189,39 +187,28 @@ The plugin includes an intelligent block reference update system that helps main
 
 ## Safety Features
 
-This plugin implements several safety and redundancy features following PTTM principles:
+This plugin implements several safety and redundancy features following PTKM principles:
 
 1. **Prevention**:
    - Confirmation dialogs before updates
    - Preview of all changes
    - Safe mode for block references
    - Validation of link targets
-
 2. **Tracking**:
    - Comprehensive change logging
    - Detailed update history
    - Clear modification records
    - Canvas node tracking
-
 3. **Transparency**:
    - Clear display of affected files
    - Explicit update confirmations
    - Readable log format
    - Visual preview of changes
-
 4. **Maintainability**:
    - Structured log files
    - Configurable settings
    - Flexible update modes
    - Canvas compatibility
-
-## Best Practices
-
-1. **Regular Backups**: While the plugin includes safety features, always maintain backups of your vault
-2. **Review Changes**: Use the confirmation dialog to verify updates before applying
-3. **Monitor Logs**: Check the change log to track modifications and ensure desired outcomes
-4. **Choose Update Mode**: Use safe mode for general updates and force mode when consolidating references
-5. **Canvas Considerations**: Review canvas node connections when updating links in canvas files
 
 ## Installation
 
@@ -230,10 +217,6 @@ This plugin implements several safety and redundancy features following PTTM pri
 3. Click Browse and search for "Link Maintainer"
 4. Install the plugin
 5. Enable the plugin in your Community Plugins list
-
-## License
-
-MIT License. See [LICENSE](LICENSE) for more information.
 
 ## Support me
 
