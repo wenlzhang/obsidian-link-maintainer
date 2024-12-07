@@ -58,17 +58,22 @@ export class ResultsModal extends Modal {
         // Match list title
         contentEl.createEl('h3', { text: 'Found References:' });
 
+        // Group matches by file type
+        const markdownMatches = this.matches.filter(match => !match.isCanvasNode);
+        const canvasMatches = this.matches.filter(match => match.isCanvasNode);
+
         const matchList = contentEl.createEl('div', { cls: 'link-maintainer-match-list' });
 
-        this.matches.forEach((match, index) => {
+        // Function to create match item
+        const createMatchItem = (match: LinkMatch, index: number, fileType: string) => {
             const matchItem = matchList.createEl('div', { cls: 'link-maintainer-match-item' });
             
             // Create file link area
             const fileInfoContainer = matchItem.createEl('div', { cls: 'link-maintainer-file-info' });
             
-            // Display file number
+            // Display file number and type
             fileInfoContainer.createSpan({
-                text: `File ${index + 1}: `
+                text: `${fileType} ${index + 1}: `
             });
 
             // Create clickable file link
@@ -76,7 +81,7 @@ export class ResultsModal extends Modal {
             if (file instanceof TFile) {
                 const fileName = file.basename;
                 const fileLink = fileInfoContainer.createEl('a', {
-                    text: `[[${fileName}]]`,
+                    text: `[[${fileName}${match.isCanvasNode ? '.canvas' : '.md'}]]`,
                     cls: 'link-maintainer-file-link'
                 });
                 fileLink.addEventListener('click', async (event) => {
@@ -92,18 +97,47 @@ export class ResultsModal extends Modal {
                 });
             }
 
-            // Display line number
-            matchItem.createEl('div', {
-                cls: 'link-maintainer-line-number',
-                text: `Line ${match.lineNumber + 1}:`
-            });
+            // Display line number or node info
+            if (match.isCanvasNode) {
+                matchItem.createEl('div', {
+                    cls: 'link-maintainer-line-number',
+                    text: `Node ID: ${match.nodeId}`
+                });
+            } else {
+                matchItem.createEl('div', {
+                    cls: 'link-maintainer-line-number',
+                    text: `Line ${match.lineNumber + 1}:`
+                });
+            }
             
             // Display line content with link
             matchItem.createEl('div', {
                 cls: 'link-maintainer-line-content',
                 text: match.lineContent
             });
-        });
+        };
+
+        // Display markdown matches
+        if (markdownMatches.length > 0) {
+            matchList.createEl('h4', { 
+                text: `Markdown Files (${markdownMatches.length})`,
+                cls: 'link-maintainer-group-header'
+            });
+            markdownMatches.forEach((match, index) => {
+                createMatchItem(match, index, 'Markdown File');
+            });
+        }
+
+        // Display canvas matches
+        if (canvasMatches.length > 0) {
+            matchList.createEl('h4', { 
+                text: `Canvas Files (${canvasMatches.length})`,
+                cls: 'link-maintainer-group-header'
+            });
+            canvasMatches.forEach((match, index) => {
+                createMatchItem(match, index, 'Canvas File');
+            });
+        }
 
         const buttonContainer = contentEl.createEl('div', { cls: 'link-maintainer-button-container' });
 
