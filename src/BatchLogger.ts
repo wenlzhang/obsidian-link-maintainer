@@ -35,16 +35,16 @@ export async function writeBatchToLog(
         ) || [];
 
     const logEntry = [
-        `## Batch Update at ${batch.timestamp}`,
+        `## Batch update at ${batch.timestamp}`,
         "",
         `> Block reference update: ${batch.blockId} → ${getNoteName(batch.newFileName)}`,
         "",
         "### Details",
         "",
         `- **Block ID**: \`${batch.blockId}\``,
-        `- Original Link: \`${originalLink}\``,
-        `- Updated Link: \`${updatedLink}\``,
-        `- **Files Affected**: ${batch.changes?.length}`,
+        `- Original link: \`${originalLink}\``,
+        `- Updated link: \`${updatedLink}\``,
+        `- **Files affected**: ${batch.changes?.length}`,
         "",
         "### Changes",
         "",

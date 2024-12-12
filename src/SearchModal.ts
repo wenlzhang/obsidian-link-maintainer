@@ -33,23 +33,23 @@ export class SearchModal extends Modal {
         const self = this;
         contentEl.addClass("link-maintainer-modal");
         contentEl.createEl("h2", {
-            text: "Link Maintainer: Update Link References",
+            text: "Link Maintainer: Update link references",
         });
 
         // Link type dropdown
         const linkTypeContainer = contentEl.createDiv({ cls: "setting-item" });
-        linkTypeContainer.createEl("label", { text: "Link Type:" });
+        linkTypeContainer.createEl("label", { text: "Link type:" });
         const linkTypeDropdown = linkTypeContainer.createEl("select");
         linkTypeDropdown.createEl("option", {
-            text: "Note Link ([[filename]])",
+            text: "Note link ([[filename]])",
             value: LinkType.NOTE,
         });
         linkTypeDropdown.createEl("option", {
-            text: "Block Link ([[filename#^blockid]])",
+            text: "Block link ([[filename#^blockid]])",
             value: LinkType.BLOCK,
         });
         linkTypeDropdown.createEl("option", {
-            text: "Heading Link ([[filename#Heading]])",
+            text: "Heading link ([[filename#Heading]])",
             value: LinkType.HEADING,
         });
 
@@ -61,14 +61,14 @@ export class SearchModal extends Modal {
 
         // Old file name input
         const oldFileContainer = contentEl.createDiv({ cls: "setting-item" });
-        oldFileContainer.createEl("label", { text: "Old File Name:" });
+        oldFileContainer.createEl("label", { text: "Old file name:" });
         new TextComponent(oldFileContainer)
             .setPlaceholder("Enter old file name (e.g., fooA)")
             .onChange((value) => (self.oldFileName = value));
 
         // New file name input
         const newFileContainer = contentEl.createDiv({ cls: "setting-item" });
-        newFileContainer.createEl("label", { text: "New File Name:" });
+        newFileContainer.createEl("label", { text: "New file name:" });
         new TextComponent(newFileContainer)
             .setPlaceholder("Enter new file name (e.g., fooB)")
             .onChange((value) => (self.newFileName = value));

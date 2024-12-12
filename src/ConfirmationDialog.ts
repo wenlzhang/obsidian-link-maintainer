@@ -8,7 +8,7 @@ export async function showConfirmationDialog(
 ): Promise<boolean> {
     return new Promise((resolve) => {
         const modal = new Modal(app);
-        modal.titleEl.setText("Confirm Link Updates");
+        modal.titleEl.setText("Confirm link updates");
 
         const content = modal.contentEl;
         content.empty();
@@ -54,18 +54,18 @@ export async function showConfirmationDialog(
             // Display markdown matches
             if (markdownMatches.length > 0) {
                 list.createEl("div", {
-                    text: `Markdown Files (${markdownMatches.length})`,
+                    text: `Markdown files (${markdownMatches.length})`,
                     attr: { style: "font-weight: bold; margin: 8px 0;" },
                 });
                 markdownMatches.forEach((match, index) => {
-                    createMatchItem(match, index, "Markdown File");
+                    createMatchItem(match, index, "Markdown file");
                 });
             }
 
             // Display canvas matches
             if (canvasMatches.length > 0) {
                 list.createEl("div", {
-                    text: `Canvas Files (${canvasMatches.length})`,
+                    text: `Canvas files (${canvasMatches.length})`,
                     attr: {
                         style: "font-weight: bold; margin: 8px 0; margin-top: 16px;",
                     },
@@ -101,7 +101,7 @@ export async function showConfirmationDialog(
         // Confirm button
         const confirmButton = buttonContainer.createEl("button", {
             cls: "mod-cta",
-            text: "Confirm Updates",
+            text: "Confirm updates",
             attr: { style: "padding: 4px 12px;" },
         });
         confirmButton.onclick = () => {

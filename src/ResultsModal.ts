@@ -70,7 +70,7 @@ export class ResultsModal extends Modal {
         });
 
         // Match list title
-        contentEl.createEl("h3", { text: "Found References:" });
+        contentEl.createEl("h3", { text: "Found references:" });
 
         // Group matches by file type
         const markdownMatches = self.matches.filter(
@@ -151,18 +151,18 @@ export class ResultsModal extends Modal {
         // Display markdown matches
         if (markdownMatches.length > 0) {
             matchList.createEl("h4", {
-                text: `Markdown Files (${markdownMatches.length})`,
+                text: `Markdown files (${markdownMatches.length})`,
                 cls: "link-maintainer-group-header",
             });
             markdownMatches.forEach((match, index) => {
-                createMatchItem(match, index, "Markdown File");
+                createMatchItem(match, index, "Markdown file");
             });
         }
 
         // Display canvas matches
         if (canvasMatches.length > 0) {
             matchList.createEl("h4", {
-                text: `Canvas Files (${canvasMatches.length})`,
+                text: `Canvas files (${canvasMatches.length})`,
                 cls: "link-maintainer-group-header",
             });
             canvasMatches.forEach((match, index) => {
@@ -182,7 +182,7 @@ export class ResultsModal extends Modal {
         });
 
         const confirmButton = buttonContainer.createEl("button", {
-            text: "Update References",
+            text: "Update references",
             cls: "mod-cta",
         });
         confirmButton.addEventListener("click", () => {
