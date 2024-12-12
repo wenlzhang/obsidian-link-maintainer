@@ -1,7 +1,7 @@
 {
 	"id": "link-maintainer",
 	"name": "Link Maintainer",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"minAppVersion": "1.0.0",
 	"description": "Maintain note links when splitting or reorganizing notes.",
 	"author": "wenlzhang",
