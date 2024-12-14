@@ -4,6 +4,8 @@
 
 An [Obsidian](https://obsidian.md/) plugin that helps you maintain block references when splitting or reorganizing notes, with a focus on safety and reliability.
 
+![demo](/docs/attachment/demo.gif)
+
 ## Why You Need Link Maintainer
 
 Have you ever found yourself in this situation? You're working with a long note in Obsidian, and you realize that a particular section would be more valuable as its own note. This is a common scenario when:
