@@ -6,6 +6,14 @@ An [Obsidian](https://obsidian.md/) plugin that helps you maintain block referen
 
 ![demo](/docs/attachment/demo.gif)
 
+## Videos and Articles
+
+### Videos
+
+<a href="https://youtu.be/OHSdNaQIuZ0" target="_blank">
+  <img src="./docs/attachment/thumbnail-demo.png" width="800" alt="Effortlessly Maintain Your Obsidian Links with the Link Maintainer Plugin & PTKM Method" />
+</a>
+
 ## Why You Need Link Maintainer
 
 Have you ever found yourself in this situation? You're working with a long note in Obsidian, and you realize that a particular section would be more valuable as its own note. This is a common scenario when:
