@@ -94,7 +94,7 @@ However, just like renaming tags in Obsidian (e.g., with Tag Wrangler), once lin
 
 ## Documentation
 
-📚 **[View Full Documentation](https://exp.ptkm.net/obsidian-link-maintainer)**
+📚 **[View Full Documentation](https://ptkm.net/obsidian-link-maintainer)**
 
 Visit the documentation site to learn how to make the most of Link Maintainer in your Obsidian workflow.
 
