@@ -41,7 +41,7 @@ export class BlockReferenceManager {
 
     private async searchBlockReferences(
         blockId: string,
-        excludeFileName: string,
+        currentFileName: string,
     ): Promise<{ matches: LinkMatch[]; alreadyUpdatedCount: number }> {
         const matches: LinkMatch[] = [];
         let alreadyUpdatedCount = 0;
@@ -49,17 +49,20 @@ export class BlockReferenceManager {
         // Get both markdown and canvas files
         const allFiles = this.app.vault.getFiles();
         const relevantFiles = allFiles.filter(
-            (file) =>
-                (file.extension === "md" || file.extension === "canvas") &&
-                file.basename !== excludeFileName,
+            (file) => file.extension === "md" || file.extension === "canvas",
         );
 
         // Create regex patterns
+        // For files other than current: match both full wikilinks and bare block references
         const blockIdPattern = new RegExp(
             `\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]|\\^${blockId}(?=[\\s\\]\\n]|$)`,
         );
+        // For current file: only match wikilinks (to avoid matching the block definition itself)
+        const currentFileBlockPattern = new RegExp(
+            `\\[\\[([^\\]]+)#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]`,
+        );
         const updatedLinkPattern = new RegExp(
-            `\\[\\[${excludeFileName}#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]`,
+            `\\[\\[${currentFileName}#\\^${blockId}(?:\\|[^\\]]+)?\\]\\]`,
         );
 
         for (const file of relevantFiles) {
@@ -76,7 +79,13 @@ export class BlockReferenceManager {
                         // Use for...of instead of forEach to properly handle async/await
                         for (const node of canvasData.nodes) {
                             if (node.text) {
-                                const match = node.text.match(blockIdPattern);
+                                // Use different pattern for current file vs other files
+                                const isCurrentFile =
+                                    file.basename === currentFileName;
+                                const patternToUse = isCurrentFile
+                                    ? currentFileBlockPattern
+                                    : blockIdPattern;
+                                const match = node.text.match(patternToUse);
                                 if (match) {
                                     // Check if the link is already updated
                                     if (updatedLinkPattern.test(node.text)) {
@@ -140,10 +149,15 @@ export class BlockReferenceManager {
             } else {
                 // Handle markdown files
                 const lines = content.split("\n");
+                // Use different pattern for current file vs other files
+                const isCurrentFile = file.basename === currentFileName;
+                const patternToUse = isCurrentFile
+                    ? currentFileBlockPattern
+                    : blockIdPattern;
 
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
-                    const match = line.match(blockIdPattern);
+                    const match = line.match(patternToUse);
                     if (match) {
                         // Check if the link is already updated
                         if (updatedLinkPattern.test(line)) {
