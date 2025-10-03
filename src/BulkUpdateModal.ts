@@ -28,7 +28,7 @@ export class BulkUpdateModal extends Modal {
 
         // Summary
         const summary = contentEl.createEl("p", {
-            attr: { style: "margin-bottom: 16px;" },
+            cls: "bulk-update-summary",
         });
         summary.createSpan({
             text: `Found ${this.allMatches.length} invalid block reference${this.allMatches.length !== 1 ? "s" : ""} to update:`,
@@ -36,34 +36,28 @@ export class BulkUpdateModal extends Modal {
 
         // Group by block ID
         const groupContainer = contentEl.createEl("div", {
-            attr: {
-                style: "max-height: 400px; overflow-y: auto; margin-bottom: 16px; padding: 12px; border: 1px solid var(--background-modifier-border); border-radius: 4px;",
-            },
+            cls: "bulk-update-group-container",
         });
 
         for (const plan of this.updatePlan) {
             const groupEl = groupContainer.createEl("div", {
-                attr: { style: "margin-bottom: 16px;" },
+                cls: "bulk-update-group",
             });
 
             // Block ID header
             groupEl.createEl("div", {
                 text: `Block ID: ^${plan.blockId} → ${plan.correctFileName}`,
-                attr: {
-                    style: "font-weight: bold; margin-bottom: 8px; color: var(--text-accent);",
-                },
+                cls: "bulk-update-block-header",
             });
 
             // List matches for this block ID
             const matchList = groupEl.createEl("div", {
-                attr: { style: "margin-left: 16px;" },
+                cls: "bulk-update-match-list",
             });
 
             plan.matches.forEach((match, index) => {
                 const matchItem = matchList.createEl("div", {
-                    attr: {
-                        style: "margin-bottom: 8px; font-size: 0.9em; padding: 4px; background: var(--background-secondary); border-radius: 4px;",
-                    },
+                    cls: "bulk-update-match-item",
                 });
 
                 const file = this.app.vault.getAbstractFileByPath(match.file);
@@ -71,9 +65,6 @@ export class BulkUpdateModal extends Modal {
                     const fileLink = matchItem.createEl("a", {
                         text: `${index + 1}. ${file.basename}`,
                         cls: "link-maintainer-file-link",
-                        attr: {
-                            style: "cursor: pointer; color: var(--text-accent);",
-                        },
                     });
                     fileLink.addEventListener("click", async () => {
                         const leaf = this.app.workspace.getLeaf();
@@ -92,9 +83,7 @@ export class BulkUpdateModal extends Modal {
 
                     matchItem.createEl("div", {
                         text: match.lineContent,
-                        attr: {
-                            style: "font-family: monospace; white-space: pre-wrap; margin-top: 4px; color: var(--text-muted);",
-                        },
+                        cls: "bulk-update-match-content",
                     });
                 }
             });
@@ -103,16 +92,12 @@ export class BulkUpdateModal extends Modal {
         // Warning
         contentEl.createEl("p", {
             text: "This action cannot be automatically undone. Changes will be logged if logging is enabled.",
-            attr: {
-                style: "color: var(--text-warning); margin-bottom: 16px;",
-            },
+            cls: "bulk-update-warning",
         });
 
         // Buttons
         const buttonContainer = contentEl.createEl("div", {
-            attr: {
-                style: "display: flex; justify-content: flex-end; gap: 8px;",
-            },
+            cls: "link-maintainer-button-container",
         });
 
         const cancelButton = buttonContainer.createEl("button", {

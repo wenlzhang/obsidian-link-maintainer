@@ -185,3 +185,52 @@
 .link-maintainer-changes-list .match-item[data-file-type="markdown"] {
     border-left-color: var(--text-accent);
 }
+
+/* Bulk Update Modal Styles */
+
+.bulk-update-summary {
+    margin-bottom: 16px;
+}
+
+.bulk-update-group-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+}
+
+.bulk-update-group {
+    margin-bottom: 16px;
+}
+
+.bulk-update-block-header {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: var(--text-accent);
+}
+
+.bulk-update-match-list {
+    margin-left: 16px;
+}
+
+.bulk-update-match-item {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    padding: 4px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.bulk-update-match-content {
+    font-family: monospace;
+    white-space: pre-wrap;
+    margin-top: 4px;
+    color: var(--text-muted);
+}
+
+.bulk-update-warning {
+    color: var(--text-warning);
+    margin-bottom: 16px;
+}
