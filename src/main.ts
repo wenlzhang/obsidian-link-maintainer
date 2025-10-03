@@ -81,6 +81,7 @@ export default class LinkMaintainer extends Plugin {
             this.app,
             this.linkReplacer.replaceLinks.bind(this.linkReplacer),
             this.settings.replaceExistingBlockLinks,
+            this.settings,
         );
 
         this.addSettingTab(new LinkMaintainerSettingTab(this.app, this));
@@ -117,6 +118,22 @@ export default class LinkMaintainer extends Plugin {
                 this.searchAndUpdateBlockReferences(
                     info.blockId,
                     activeFile.basename,
+                );
+            },
+        });
+
+        this.addCommand({
+            id: "update-all-invalid-block-references",
+            name: "Update all invalid block references in current note",
+            callback: async () => {
+                const activeFile = this.app.workspace.getActiveFile();
+                if (!activeFile) {
+                    new Notice("No active file");
+                    return;
+                }
+
+                await this.blockReferenceManager.findAndUpdateAllInvalidBlockReferences(
+                    activeFile,
                 );
             },
         });
