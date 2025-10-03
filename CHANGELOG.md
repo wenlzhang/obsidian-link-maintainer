@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.3.0] - 2025-10-03
+
+### Changes
+
+- fix: prevent matching block definition when searching block references in current file
+- Update docs
+- Update docs
+- Update README.md
+
 ## [0.2.1] - 2024-12-12
 
 ### Changes
