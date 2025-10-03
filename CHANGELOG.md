@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.4.0] - 2025-10-03
+
+### Changes
+
+- refactor: move bulk update modal styles from inline to CSS stylesheet
+- feat: add bulk update functionality for invalid block references in current note
+
 ## [0.3.0] - 2025-10-03
 
 ### Changes
