@@ -65,6 +65,62 @@ This is exactly why Link Maintainer exists. With this plugin, you can:
 
 No more manual searching and replacing. No more broken references. Just smooth, reliable link maintenance that lets you focus on organizing your knowledge the way you want.
 
+## Key Features
+
+### Update Block References from Selection
+
+Select a line containing a block ID and run the command to update all references to that block across your vault.
+
+**How to use:**
+
+1. Select the text containing a block ID (e.g., `^important-block` or `new-note#^important-block`)
+2. Run the command: **"Update block references from selection"**
+3. Review all found references in the preview modal
+4. Confirm to update all references at once
+
+The plugin will:
+
+- Find all references to the block ID in markdown notes and canvas files
+- Show you a detailed preview of what will be changed
+- Update all references to point to the correct note
+- Log all changes (if logging is enabled)
+
+### Bulk Update All Invalid Block References
+
+Automatically find and fix all invalid block references in the current note - both outgoing and incoming references.
+
+**How to use:**
+
+1. Open the note you want to check
+2. Run the command: **"Update all invalid block references in current note"**
+3. Review the consolidated list of all invalid references grouped by block ID
+4. Confirm to update all invalid references at once
+
+The plugin will intelligently detect two types of invalid references:
+
+**Outgoing references** (references FROM the current note):
+
+- Block references in the current note that point to the wrong file
+- Example: `[[old-note#^block1]]` when the block is actually in `new-note`
+
+**Incoming references** (references TO the current note):
+
+- Block IDs defined in the current note that are referenced incorrectly from other files
+- Example: Other notes still referencing `[[old-name#^block1]]` when the note has been renamed to `new-name`
+
+This is especially useful when:
+
+- You've renamed a note that contains block IDs
+- You've moved content with block IDs between notes
+- You want to clean up all broken block references in one go
+
+### Safety Features
+
+- **Detailed preview**: See exactly what will change before confirming
+- **Change logging**: Keep track of all link updates (optional)
+- **Validation**: Automatically verifies block references exist before updating
+- **Canvas support**: Works seamlessly with both markdown notes and canvas files
+
 ## The Story Behind Link Maintainer
 
 I often take long notes in my PTKM system for a simple reason: longer notes help reduce the overall number of notes in the system, making it much easier to maintain the entire knowledge base. Imagine managing 100,000 notes versus 10,000 notes—roughly the number I have now. For me, the former feels overwhelming. (To learn more, feel free to read my take on [[Long notes or atomic notes]].)
